@@ -8,9 +8,9 @@ use futures_util::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
-use std::{fs::File, io::BufReader, sync::Arc};
+use std::{fs::File, io::BufReader, path::Path, sync::Arc};
 use tokio::net::TcpStream;
-use tokio_rustls::rustls::{self, RootCertStore};
+use tokio_rustls::rustls::{self, pki_types::{pem::PemObject, CertificateDer, TrustAnchor}, RootCertStore};
 use tokio_tungstenite::{
     connect_async_tls_with_config,
     tungstenite::{Error, Message},
@@ -41,25 +41,27 @@ pub trait SocketFuncs {
 #[async_trait]
 impl SocketFuncs for Socket {
     async fn new(ctx: WebviewWindow, url: String) -> Result<Box<Self>, util::Error> {
-        // let (ws_stream, _) = connect_async(url).await?;
 
-        // let cert_file = fs::read("cert.pem").unwrap();
-        // let rust_cert = rustls::Certificate(cert_file);
-        let mut root_cert_store = RootCertStore::empty();
 
-        // let cert = rustls_pemfile::certs(&mut BufReader::new(File::open("rootCA.crt")?))?;
-        // let certificates: Vec<Certificate> = cert.into_iter().map(Certificate).collect();
-        // let certificate = certificates
-        //     .get(0)
-        //     .ok_or(util::Error::CustomError("no certificate found".to_string()))?;
-        // root_cert_store.add(certificate).unwrap();
+        let tls_config = match Path::new("rootCA.crt").exists(){
+            true => {
+                let mut root_cert_store = RootCertStore::empty();
 
-        let tls_config = rustls::ClientConfig::builder()
-            .with_root_certificates(root_cert_store)
-            .with_no_client_auth();
+                let cert_der = CertificateDer::from_pem_file("rootCA.crt").unwrap();
+                root_cert_store.add(cert_der).unwrap();
 
-        let tls_config = rustls_platform_verifier::tls_config();
+                info!("using provided root ca");
 
+                rustls::ClientConfig::builder()
+                    .with_root_certificates(root_cert_store)
+                    .with_no_client_auth()
+            },
+            false => {
+                info!("defaulting to os native certs");
+                rustls_platform_verifier::tls_config()
+            },
+        };
+        
 
         let connector = Connector::Rustls(Arc::new(tls_config));
 
