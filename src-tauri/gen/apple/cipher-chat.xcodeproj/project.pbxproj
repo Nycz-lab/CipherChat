@@ -1,0 +1,473 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		009797564F105C22612F1F17 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = FC8DD003177FD0D4839D3FD6 /* assets */; };
+		0DCE64878CFA27D4C2EFA9E5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1B77B3C7AE79DC10932AAB92 /* LaunchScreen.storyboard */; };
+		10A60357DBFB04E1E2C3AF46 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B378E217629735DF8081AFC /* Security.framework */; };
+		1146C52814893D2B3C734E57 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC3FA74BC69AF3483C1599BA /* Metal.framework */; };
+		3AB29CB4C7208441CF42E7C1 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BDE0B79371355EC1ADA5B29E /* WebKit.framework */; };
+		6D9A3B2214F117D7001F85C6 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7AF42E4A3F5535C951CEF97 /* MetalKit.framework */; };
+		700B2161712884992C744A3B /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = A801C8DF8DE13287AB3ADCE7 /* main.mm */; };
+		97892B620CBA217250C83240 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 68142A70AAF87F1FC75F27FD /* Assets.xcassets */; };
+		BD702BA2871A66090DD3D0E7 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EA0AC011AABF67CB889CE7E2 /* CoreGraphics.framework */; };
+		BE0D0E3C5200FD48CA422615 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B50519CFED76D6D265B9F0F5 /* QuartzCore.framework */; };
+		C5761FC9EFB960FC5A16D5A6 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC28E16373458CB83D4C8731 /* UIKit.framework */; };
+		DC3E18130205459C31F91D86 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D355E649BEE31B3ECF17E2C /* libapp.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		10254AA04296CAD88DA9EE06 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		13141E7EC97E8BD5BF59EB91 /* cipher-chat_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "cipher-chat_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1B378E217629735DF8081AFC /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		1B77B3C7AE79DC10932AAB92 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		446F2EB8A55161567FCDD39B /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
+		485F289CEDD55A809A1FA9D6 /* xxxdh.rs */ = {isa = PBXFileReference; path = xxxdh.rs; sourceTree = "<group>"; };
+		4AF99B8615E7F6BDA16014E8 /* cipher-chat_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "cipher-chat_iOS.entitlements"; sourceTree = "<group>"; };
+		595DE5405F5781970657BCAC /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
+		68142A70AAF87F1FC75F27FD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7D355E649BEE31B3ECF17E2C /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		850B9101F1538FAAC3BACA8C /* socket.rs */ = {isa = PBXFileReference; path = socket.rs; sourceTree = "<group>"; };
+		8588339D0F25E0A15B27981F /* crypt.rs */ = {isa = PBXFileReference; path = crypt.rs; sourceTree = "<group>"; };
+		8F5B6F0B823418C9EA76D155 /* x3dh.rs */ = {isa = PBXFileReference; path = x3dh.rs; sourceTree = "<group>"; };
+		991F9E1CE4108B8631695B89 /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
+		A7AF42E4A3F5535C951CEF97 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		A801C8DF8DE13287AB3ADCE7 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		B50519CFED76D6D265B9F0F5 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		BDE0B79371355EC1ADA5B29E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		D99A2CD802C8099BF823833E /* util.rs */ = {isa = PBXFileReference; path = util.rs; sourceTree = "<group>"; };
+		DC3FA74BC69AF3483C1599BA /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		EA0AC011AABF67CB889CE7E2 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		EC28E16373458CB83D4C8731 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		FC8DD003177FD0D4839D3FD6 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2D14108B685BEF118ACE0CDD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DC3E18130205459C31F91D86 /* libapp.a in Frameworks */,
+				BD702BA2871A66090DD3D0E7 /* CoreGraphics.framework in Frameworks */,
+				1146C52814893D2B3C734E57 /* Metal.framework in Frameworks */,
+				6D9A3B2214F117D7001F85C6 /* MetalKit.framework in Frameworks */,
+				BE0D0E3C5200FD48CA422615 /* QuartzCore.framework in Frameworks */,
+				10A60357DBFB04E1E2C3AF46 /* Security.framework in Frameworks */,
+				C5761FC9EFB960FC5A16D5A6 /* UIKit.framework in Frameworks */,
+				3AB29CB4C7208441CF42E7C1 /* WebKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1F3FB26EC00A0F945B5C433E /* bindings */ = {
+			isa = PBXGroup;
+			children = (
+				446F2EB8A55161567FCDD39B /* bindings.h */,
+			);
+			path = bindings;
+			sourceTree = "<group>";
+		};
+		48F5C778D87B7A13F296CDA5 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				B6E5C85298A04BA778ECEE13 /* cipher-chat */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		606F36B6C62971613FD48DC3 /* cipher-chat_iOS */ = {
+			isa = PBXGroup;
+			children = (
+				4AF99B8615E7F6BDA16014E8 /* cipher-chat_iOS.entitlements */,
+				10254AA04296CAD88DA9EE06 /* Info.plist */,
+			);
+			path = "cipher-chat_iOS";
+			sourceTree = "<group>";
+		};
+		676D725CDC64C781C57976F4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13141E7EC97E8BD5BF59EB91 /* cipher-chat_iOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B6E5C85298A04BA778ECEE13 /* cipher-chat */ = {
+			isa = PBXGroup;
+			children = (
+				A801C8DF8DE13287AB3ADCE7 /* main.mm */,
+				1F3FB26EC00A0F945B5C433E /* bindings */,
+			);
+			path = "cipher-chat";
+			sourceTree = "<group>";
+		};
+		BEC3EEEAA2DB8A1CC4BD493C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				EA0AC011AABF67CB889CE7E2 /* CoreGraphics.framework */,
+				7D355E649BEE31B3ECF17E2C /* libapp.a */,
+				DC3FA74BC69AF3483C1599BA /* Metal.framework */,
+				A7AF42E4A3F5535C951CEF97 /* MetalKit.framework */,
+				B50519CFED76D6D265B9F0F5 /* QuartzCore.framework */,
+				1B378E217629735DF8081AFC /* Security.framework */,
+				EC28E16373458CB83D4C8731 /* UIKit.framework */,
+				BDE0B79371355EC1ADA5B29E /* WebKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D4A9898ECC3CA5EFEC1DD362 = {
+			isa = PBXGroup;
+			children = (
+				FC8DD003177FD0D4839D3FD6 /* assets */,
+				68142A70AAF87F1FC75F27FD /* Assets.xcassets */,
+				1B77B3C7AE79DC10932AAB92 /* LaunchScreen.storyboard */,
+				606F36B6C62971613FD48DC3 /* cipher-chat_iOS */,
+				FFB3A6E38409D037171C8F19 /* Externals */,
+				48F5C778D87B7A13F296CDA5 /* Sources */,
+				E63B95A60037D93B0F026782 /* src */,
+				BEC3EEEAA2DB8A1CC4BD493C /* Frameworks */,
+				676D725CDC64C781C57976F4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E63B95A60037D93B0F026782 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				8588339D0F25E0A15B27981F /* crypt.rs */,
+				991F9E1CE4108B8631695B89 /* lib.rs */,
+				595DE5405F5781970657BCAC /* main.rs */,
+				850B9101F1538FAAC3BACA8C /* socket.rs */,
+				D99A2CD802C8099BF823833E /* util.rs */,
+				8F5B6F0B823418C9EA76D155 /* x3dh.rs */,
+				485F289CEDD55A809A1FA9D6 /* xxxdh.rs */,
+			);
+			name = src;
+			path = ../../src;
+			sourceTree = "<group>";
+		};
+		FFB3A6E38409D037171C8F19 /* Externals */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Externals;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		45E32819365246304F2313B5 /* cipher-chat_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D08911CCB9C37A85DDD07C03 /* Build configuration list for PBXNativeTarget "cipher-chat_iOS" */;
+			buildPhases = (
+				D3905C44CDFD2CCF0A0E0E11 /* Build Rust Code */,
+				BDD32B4B51BEB95EE711F4D9 /* Sources */,
+				B754134B7AF33EAABFCF5461 /* Resources */,
+				2D14108B685BEF118ACE0CDD /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "cipher-chat_iOS";
+			productName = "cipher-chat_iOS";
+			productReference = 13141E7EC97E8BD5BF59EB91 /* cipher-chat_iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BAED87BFD22C997ACEC3594D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 194EDD6A9B92AE358AC17DF3 /* Build configuration list for PBXProject "cipher-chat" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D4A9898ECC3CA5EFEC1DD362;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				45E32819365246304F2313B5 /* cipher-chat_iOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B754134B7AF33EAABFCF5461 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97892B620CBA217250C83240 /* Assets.xcassets in Resources */,
+				0DCE64878CFA27D4C2EFA9E5 /* LaunchScreen.storyboard in Resources */,
+				009797564F105C22612F1F17 /* assets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		D3905C44CDFD2CCF0A0E0E11 /* Build Rust Code */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Rust Code";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a",
+				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a",
+				"$(SRCROOT)/Externals/arm64-sim/${CONFIGURATION}/libapp.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BDD32B4B51BEB95EE711F4D9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				700B2161712884992C744A3B /* main.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		68967BA743C87B27861E4113 /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = release;
+		};
+		7A56D4830F097E9750BB35F5 /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+					"arm64-sim",
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "cipher-chat_iOS/cipher-chat_iOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = "arm64-sim x86_64";
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "cipher-chat_iOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64-sim]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64-sim/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.cipher-chat.app;
+				PRODUCT_NAME = "cipher-chat";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64  arm64-sim";
+			};
+			name = release;
+		};
+		86D6A569E31D8D2B6571B1C1 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = debug;
+		};
+		DBC93A4D562AC6CC1BCF5C9E /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+					"arm64-sim",
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "cipher-chat_iOS/cipher-chat_iOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = "arm64-sim x86_64";
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "cipher-chat_iOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64-sim]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64-sim/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.cipher-chat.app;
+				PRODUCT_NAME = "cipher-chat";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64  arm64-sim";
+			};
+			name = debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		194EDD6A9B92AE358AC17DF3 /* Build configuration list for PBXProject "cipher-chat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				86D6A569E31D8D2B6571B1C1 /* debug */,
+				68967BA743C87B27861E4113 /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+		D08911CCB9C37A85DDD07C03 /* Build configuration list for PBXNativeTarget "cipher-chat_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DBC93A4D562AC6CC1BCF5C9E /* debug */,
+				7A56D4830F097E9750BB35F5 /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BAED87BFD22C997ACEC3594D /* Project object */;
+}
