@@ -10,7 +10,7 @@ use futures_util::{
 };
 use std::{fs::File, io::BufReader, sync::Arc};
 use tokio::net::TcpStream;
-use tokio_rustls::rustls::{self, Certificate, RootCertStore};
+use tokio_rustls::rustls::{self, RootCertStore};
 use tokio_tungstenite::{
     connect_async_tls_with_config,
     tungstenite::{Error, Message},
@@ -47,17 +47,19 @@ impl SocketFuncs for Socket {
         // let rust_cert = rustls::Certificate(cert_file);
         let mut root_cert_store = RootCertStore::empty();
 
-        let cert = rustls_pemfile::certs(&mut BufReader::new(File::open("rootCA.crt")?))?;
-        let certificates: Vec<Certificate> = cert.into_iter().map(Certificate).collect();
-        let certificate = certificates
-            .get(0)
-            .ok_or(util::Error::CustomError("no certificate found".to_string()))?;
-        root_cert_store.add(certificate).unwrap();
+        // let cert = rustls_pemfile::certs(&mut BufReader::new(File::open("rootCA.crt")?))?;
+        // let certificates: Vec<Certificate> = cert.into_iter().map(Certificate).collect();
+        // let certificate = certificates
+        //     .get(0)
+        //     .ok_or(util::Error::CustomError("no certificate found".to_string()))?;
+        // root_cert_store.add(certificate).unwrap();
 
         let tls_config = rustls::ClientConfig::builder()
-            .with_safe_defaults()
             .with_root_certificates(root_cert_store)
             .with_no_client_auth();
+
+        let tls_config = rustls_platform_verifier::tls_config();
+
 
         let connector = Connector::Rustls(Arc::new(tls_config));
 
