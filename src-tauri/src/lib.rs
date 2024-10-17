@@ -132,6 +132,9 @@ async fn close_conn() -> Result<(), Error> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+
+    pretty_env_logger::init();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_notification::init())
