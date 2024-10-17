@@ -41,10 +41,21 @@ async fn decrypt(key: &str, txt: &str) -> Result<String, util::Error> {
 }
 
 #[tauri::command]
-async fn send_msg(msg: MsgPayload) -> Result<(), util::Error> {
+async fn send_msg(msg: MsgPayload, app_handle: tauri::AppHandle) -> Result<(), util::Error> {
     let mut socket_lock = SOCKET.lock().await;
     if let Some(socket) = socket_lock.as_mut() {
-        socket.send_msg(msg).await?;
+
+        let store = app_handle.store_builder("secrets.bin").build();
+        if store.has(&msg.recipient){
+            info!("found recipient in store");
+            socket.send_msg(msg).await?;
+        }else{
+            socket.msg_queue.lock().await.push(msg.clone());
+            socket.fetch_bundle(msg.recipient, msg.token).await?;
+        }
+
+        
+        
     } else {
         // Handle the case when the Option is None
         error!("Socket not initialized.");
@@ -79,14 +90,14 @@ async fn register(auth: MsgPayload, app_handle: tauri::AppHandle) -> Result<(), 
 
 #[tauri::command]
 async fn send_enc_msg(key: &str, mut msg: MsgPayload) -> Result<(), util::Error> {
-    msg.content = encrypt(key, &msg.content).await?;
-    send_msg(msg).await?;
+    // msg.content = encrypt(key, &msg.content.unwrap().cleartext.unwrap()).await?;
+    // send_msg(msg).await?;
     Ok(())
 }
 
 #[tauri::command]
-async fn connect_via_url(url: String) -> Result<util::ConnectionInfo, util::Error> {
-    init_conn(url.to_string()).await?;
+async fn connect_via_url(url: String, app_handle: tauri::AppHandle) -> Result<util::ConnectionInfo, util::Error> {
+    init_conn(url.to_string(), app_handle).await?;
     let mut stream_type = "not defined";
     let socket_lock = SOCKET.lock().await;
     if let Some(socket) = socket_lock.as_ref() {
@@ -98,7 +109,7 @@ async fn connect_via_url(url: String) -> Result<util::ConnectionInfo, util::Erro
     })
 }
 
-async fn init_conn(url: String) -> Result<(), Error> {
+async fn init_conn(url: String, app_handle: tauri::AppHandle) -> Result<(), Error> {
     info!("initiating Connection");
     let mut win1 = MAIN_WINDOW.lock().await;
     let win = win1.as_mut();
@@ -109,7 +120,7 @@ async fn init_conn(url: String) -> Result<(), Error> {
             return Ok(());
         },
     };
-    let mut socket = Socket::new(res.clone(), url).await?;
+    let mut socket = Socket::new(res.clone(), url, app_handle).await?;
     socket.recv_msg().await;
     *SOCKET.lock().await = Some(socket);
     Ok(())

@@ -30,13 +30,12 @@ function Auth({token, setToken, user, setUser}) {
 
   async function login() {
     let msgStruct = {
-      content_type: 'auth',
-      content: '',
       timestamp: Math.floor(Date.now()/1000),
       auth: {
         action: "login",
         user: user,
-        password: password
+        password: password,
+        message: ""
       },
       token: '',
       author: '',
@@ -47,13 +46,12 @@ function Auth({token, setToken, user, setUser}) {
 
   async function register() {
     let msgStruct = {
-      content_type: 'auth',
-      content: '',
       timestamp: Math.floor(Date.now()/1000),
       auth: {
         action: "register",
         user: user,
-        password: password
+        password: password,
+        message: ""
       },
       token: '',
       author: '',

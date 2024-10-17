@@ -6,8 +6,8 @@ use aes_gcm::Key;
 use base64::{prelude::BASE64_STANDARD, Engine};
 use cryptimitives::{aead, kdf::sha256, key::x25519_ristretto};
 use cryptraits::{
-    convert::ToVec,
-    key::{KeyPair},
+    convert::{FromBytes, ToVec},
+    key::KeyPair,
     signature::Sign,
 };
 use rand_core::OsRng;
@@ -23,7 +23,7 @@ use crate::{util::{KeyBundle, KeyPairB64, MsgPayload}, xxxdh::Protocol};
 
 pub fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> KeyBundle {
 
-    let identity = x25519_ristretto::KeyPair::generate_with(OsRng);
+    let identity: cryptimitives::key::KeyPair<x25519_ristretto::SecretKey> = x25519_ristretto::KeyPair::generate_with(OsRng);
     let prekey = x25519_ristretto::KeyPair::generate_with(OsRng);
     let signature = identity.sign(&prekey.to_public().to_vec());
 
@@ -34,7 +34,7 @@ pub fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> KeyBundl
 
         let kp = KeyPairB64 {
             public: BASE64_STANDARD.encode(onetime_keypair.public().to_vec()),
-            private: Some(BASE64_STANDARD.encode(onetime_keypair.secret().to_ed25519_bytes())),
+            private: Some(BASE64_STANDARD.encode(onetime_keypair.secret().to_vec())),
         };
 
         ot_kp.push(kp);
@@ -43,17 +43,18 @@ pub fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> KeyBundl
     let mut public_kb: KeyBundle = KeyBundle {
         identity: KeyPairB64 {
             public: BASE64_STANDARD.encode(identity.public().to_vec()),
-            private: Some(BASE64_STANDARD.encode(identity.secret().to_ed25519_bytes())),
+            private: Some(BASE64_STANDARD.encode(identity.secret().to_vec())),
         },
         prekey: KeyPairB64 {
             public: BASE64_STANDARD.encode(prekey.public().to_vec()),
-            private: Some(BASE64_STANDARD.encode(prekey.secret().to_ed25519_bytes())),
+            private: Some(BASE64_STANDARD.encode(prekey.secret().to_vec())),
         },
         signature: KeyPairB64 {
             public: BASE64_STANDARD.encode(signature.to_vec()),
             private: None,
         },
         onetime_keys: ot_kp,
+        ephemeral_key: None,
     };
 
     let store = app_handle.store_builder("credentials.bin").build();
@@ -72,7 +73,7 @@ fn check_secret_sharing_x3dh() {
 
     let alice_identity = x25519_ristretto::KeyPair::generate_with(OsRng);
     let alice_prekey = x25519_ristretto::KeyPair::generate_with(OsRng);
-    let alice_signature = alice_identity.sign(&alice_prekey.to_public().to_vec());
+    let alice_signature: x25519_ristretto::Signature = alice_identity.sign(&alice_prekey.to_public().to_vec());
     let mut alice_protocol = Protocol::new(alice_identity, alice_prekey, alice_signature, None);
 
     // Instantiate Bob protocol.
