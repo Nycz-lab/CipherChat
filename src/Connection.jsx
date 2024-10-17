@@ -16,7 +16,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 export default function Connection({connection, setConnection}) {
   const [url, setUrl] = useState("");
 
-  const port = 53999;
+  const port = 9999;
 
   async function connectToUrl(){
     try{
