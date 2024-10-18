@@ -38,11 +38,12 @@ use crate::{
 
 pub struct Socket {
     ctx: WebviewWindow,
-    pub ws_sender: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
+    pub ws_sender: Arc<Mutex<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>>,
     ws_rcvr: Option<SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>>,
     pub stream_type: String,
     pub msg_queue: Arc<Mutex<Vec<MsgPayload>>>,
     pub app_handle: tauri::AppHandle,
+    pub token: Arc<Mutex<String>>
 }
 
 #[async_trait]
@@ -105,11 +106,12 @@ impl SocketFuncs for Socket {
 
         Ok(Box::new(Socket {
             ctx: ctx,
-            ws_sender: ws_sender,
+            ws_sender: Arc::new(Mutex::new(ws_sender)),
             ws_rcvr: Some(ws_rcvr),
             stream_type: stream_type.to_string(),
             msg_queue: Arc::new(Mutex::new(Vec::new())),
             app_handle,
+            token: Arc::new(Mutex::new(String::new()))
         }))
     }
 
@@ -117,7 +119,7 @@ impl SocketFuncs for Socket {
         info!("sending: {:?}", msg.content.clone());
         let json = serde_json::to_string(&msg)?;
         let payload = Message::text(json);
-        self.ws_sender.send(payload).await?;
+        self.ws_sender.lock().await.send(payload).await?;
         Ok(())
     }
 
@@ -132,17 +134,18 @@ impl SocketFuncs for Socket {
                 keybundle: None,
                 message: "".to_string(),
             }),
-            token: token,
+            token: token.clone(),
             author: "me".to_string(),
             recipient: "".to_string(),
         };
 
-        info!("sending: {:?}", msg.content.clone());
+        info!("sending: {:?}", msg.clone());
 
         let json = serde_json::to_string(&msg)?;
         let payload = Message::text(json);
 
-        self.ws_sender.send(payload).await?;
+        self.ws_sender.lock().await.send(payload).await?;
+        *self.token.lock().await = token;
 
         Ok(())
     }
@@ -151,7 +154,7 @@ impl SocketFuncs for Socket {
         info!("logging in: {}", auth.auth.clone().unwrap().user.clone());
         let json = serde_json::to_string(&auth)?;
         let payload = Message::text(json);
-        self.ws_sender.send(payload).await?;
+        self.ws_sender.lock().await.send(payload).await?;
         Ok(())
     }
 
@@ -170,7 +173,7 @@ impl SocketFuncs for Socket {
         }
         let json = serde_json::to_string(&auth)?;
         let payload = Message::text(json);
-        self.ws_sender.send(payload).await?;
+        self.ws_sender.lock().await.send(payload).await?;
         Ok(())
     }
 
@@ -184,10 +187,12 @@ impl SocketFuncs for Socket {
 
     async fn recv_msg(&mut self) {
         let mut ws_rcvr = self.ws_rcvr.take().unwrap();
+        let ws_sender = self.ws_sender.clone();
         let ctx = self.ctx.clone();
 
         let msg_queue = self.msg_queue.clone();
         let app_handle = self.app_handle.clone();
+        let token = self.token.clone();
 
         tokio::spawn(async move {
             while let Some(Ok(msg)) = ws_rcvr.next().await {
@@ -205,143 +210,12 @@ impl SocketFuncs for Socket {
                                                 ctx.emit("register_token", msg).unwrap();
                                             }
                                         } else if v.action == "fetch_bundle" {
-                                            // self.x3dh(msg);
-
-                                            let rcvr_keybundle =
-                                                msg.auth.unwrap().keybundle.unwrap();
-
-                                            let store =
-                                                app_handle.store_builder("credentials.bin").build();
-
-                                            let sndr_keybundle = store.get(msg.recipient).unwrap();
-                                            info!("test: {}", sndr_keybundle);
-                                            let sndr_keybundle =
-                                                serde_json::from_value::<KeyBundle>(sndr_keybundle)
-                                                    .unwrap();
-
-                                            let alice_identity =
-                                                get_key_pair(sndr_keybundle.identity).unwrap();
-                                            let alice_prekey =
-                                                get_key_pair(sndr_keybundle.prekey).unwrap();
-                                            let alice_signature =
-                                                x25519_ristretto::Signature::from_bytes(
-                                                    &BASE64_STANDARD
-                                                        .decode(sndr_keybundle.signature.public)
-                                                        .unwrap(),
-                                                )
-                                                .unwrap();
-                                            let mut alice_protocol = Protocol::new(
-                                                alice_identity,
-                                                alice_prekey.clone(),
-                                                alice_signature,
-                                                None,
-                                            );
-
-                                            let bob_identity =
-                                                x25519_ristretto::PublicKey::from_bytes(
-                                                    &BASE64_STANDARD
-                                                        .decode(rcvr_keybundle.identity.public)
-                                                        .unwrap(),
-                                                )
-                                                .unwrap();
-                                            let bob_prekey =
-                                                x25519_ristretto::PublicKey::from_bytes(
-                                                    &BASE64_STANDARD
-                                                        .decode(rcvr_keybundle.prekey.public)
-                                                        .unwrap(),
-                                                )
-                                                .unwrap();
-                                            let bob_signature =
-                                                x25519_ristretto::Signature::from_bytes(
-                                                    &BASE64_STANDARD
-                                                        .decode(rcvr_keybundle.signature.public)
-                                                        .unwrap(),
-                                                )
-                                                .unwrap();
-
-                                            let bob_one_time_key =
-                                                x25519_ristretto::PublicKey::from_bytes(
-                                                    &BASE64_STANDARD
-                                                        .decode(
-                                                            rcvr_keybundle
-                                                                .onetime_keys
-                                                                .get(0)
-                                                                .unwrap()
-                                                                .clone()
-                                                                .public,
-                                                        )
-                                                        .unwrap(),
-                                                )
-                                                .unwrap();
-
-                                            let (
-                                                alice_identity,
-                                                alice_ephemeral_key,
-                                                bob_onetime_key,
-                                                alice_sk,
-                                                nonce,
-                                                ciphertext,
-                                            ) = alice_protocol
-                                                .prepare_init_msg(
-                                                    &bob_identity,
-                                                    &bob_prekey,
-                                                    bob_signature,
-                                                    &bob_one_time_key,
-                                                )
-                                                .unwrap();
-                                            info!("identity: {:?}\nephemeral_key: {:?}\nbob_one_time_key: {:?}\nalice_sk: {:?}\nnonce: {:?}\nciphertext: {:?}\n", alice_identity,
-                                            alice_ephemeral_key, bob_onetime_key, alice_sk, nonce, ciphertext);
-
-                                            use cryptraits::key::KeyPair;
-
-                                            let generated_kb: KeyBundle = KeyBundle {
-                                                identity: KeyPairB64 {
-                                                    public: BASE64_STANDARD
-                                                        .encode(alice_identity.to_vec()),
-                                                    private: None,
-                                                },
-                                                prekey: KeyPairB64 {
-                                                    public: BASE64_STANDARD
-                                                        .encode(alice_prekey.public().to_vec()),
-                                                    private: None,
-                                                },
-                                                signature: KeyPairB64 {
-                                                    public: BASE64_STANDARD
-                                                        .encode(alice_signature.to_vec()),
-                                                    private: None,
-                                                },
-                                                onetime_keys: vec![KeyPairB64 {
-                                                    public: BASE64_STANDARD
-                                                        .encode(bob_onetime_key.to_vec()),
-                                                    private: None,
-                                                }],
-                                                ephemeral_key: Some(KeyPairB64 {
-                                                    public: BASE64_STANDARD
-                                                        .encode(alice_ephemeral_key.to_vec()),
-                                                    private: None,
-                                                }),
-                                            };
-
-                                            let x = MsgPayload {
-                                                content: Some(MsgContent {
-                                                    ciphertext: BASE64_STANDARD.encode(ciphertext),
-                                                    nonce: BASE64_STANDARD.encode(nonce),
-                                                    cleartext: None,
-                                                }),
-                                                timestamp: 0,
-                                                auth: Some(OpAuthPayload {
-                                                    action: "".to_string(),
-                                                    user: "".to_string(),
-                                                    password: "".to_string(),
-                                                    keybundle: Some(generated_kb),
-                                                    message: "".to_string(),
-                                                }),
-                                                token: "".to_string(),
-                                                author: "".to_string(),
-                                                recipient: "".to_string(),
-                                            };
-                                            info!("crafted message: {:?}", x);
-                                            msg_queue.lock().await.push(x);
+                                            let x = alice_x3dh(app_handle.clone(), msg_queue.clone(), msg, token.lock().await.clone()).await;
+                                            let json = serde_json::to_string(&x).unwrap();
+                                            let payload = Message::text(json);
+                                            ws_sender.lock().await.send(payload).await.unwrap();
+                                        } else if v.action == "x3dh" {
+                                            bob_x3dh(app_handle.clone(), msg_queue.clone(), msg, token.lock().await.clone()).await;
                                         }
                                     }
                                     None => {
@@ -370,9 +244,173 @@ impl SocketFuncs for Socket {
     }
 
     async fn close(&mut self) -> Result<(), Error> {
-        self.ws_sender.close().await?;
+        self.ws_sender.lock().await.close().await?;
         Ok(())
     }
+}
+
+pub async fn bob_x3dh(app_handle: tauri::AppHandle, msg_queue: Arc<Mutex<Vec<MsgPayload>>>, msg: MsgPayload, token: String){
+
+    let kb = msg.auth.unwrap().keybundle.unwrap();
+
+    let store = app_handle.store_builder("credentials.bin").build();
+
+    let sndr_keybundle = store.get(msg.recipient.clone()).unwrap();
+    let sndr_keybundle = serde_json::from_value::<KeyBundle>(sndr_keybundle).unwrap();
+
+    let bob_identity = get_key_pair(sndr_keybundle.identity).unwrap();
+    let bob_prekey = get_key_pair(sndr_keybundle.prekey).unwrap();
+    let bob_signature = x25519_ristretto::Signature::from_bytes(
+        &BASE64_STANDARD
+            .decode(sndr_keybundle.signature.public)
+            .unwrap(),
+    )
+    .unwrap();
+
+    
+
+    let mut bob_onetime_key: Option<KeyPairB64> = Option::None;
+
+    for k in sndr_keybundle.onetime_keys{
+        if k.public == kb.onetime_keys.get(0).unwrap().public{
+            bob_onetime_key = Some(k);
+        }
+    }
+
+    let bob_onetime_key2 = get_key_pair(bob_onetime_key.clone().unwrap()).unwrap();
+
+    let bob_onetime_key = x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(bob_onetime_key.unwrap().public).unwrap())
+    .unwrap();
+
+    let mut bob_protocol =
+        Protocol::new(bob_identity, bob_prekey.clone(), bob_signature, Some(vec![bob_onetime_key2]));
+
+    let alice_identity =
+        x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(kb.identity.public).unwrap())
+            .unwrap();
+
+    let alice_ephemeral_key = x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(kb.ephemeral_key.unwrap().public).unwrap())
+    .unwrap();
+
+    let bob_sk = bob_protocol
+        .derive_shared_secret(
+            &alice_identity,
+            &alice_ephemeral_key,
+            &bob_onetime_key,
+            &BASE64_STANDARD.decode(msg.content.clone().unwrap().nonce).unwrap(),
+            &BASE64_STANDARD.decode(msg.content.unwrap().ciphertext).unwrap(),
+        )
+        .unwrap();
+
+    info!("bob_sk: {:?}", bob_sk);
+
+
+}
+
+pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg_queue: Arc<Mutex<Vec<MsgPayload>>>, msg: MsgPayload, token: String) -> MsgPayload {
+    // self.x3dh(msg);
+
+    info!("msgpayload from server: {:?}", msg);
+
+    let rcvr_keybundle = msg.auth.clone().unwrap().keybundle.unwrap();
+
+    let store = app_handle.store_builder("credentials.bin").build();
+
+    let sndr_keybundle = store.get(msg.recipient.clone()).unwrap();
+    let sndr_keybundle = serde_json::from_value::<KeyBundle>(sndr_keybundle).unwrap();
+
+    let alice_identity = get_key_pair(sndr_keybundle.identity).unwrap();
+    let alice_prekey = get_key_pair(sndr_keybundle.prekey).unwrap();
+    let alice_signature = x25519_ristretto::Signature::from_bytes(
+        &BASE64_STANDARD
+            .decode(sndr_keybundle.signature.public)
+            .unwrap(),
+    )
+    .unwrap();
+    let mut alice_protocol =
+        Protocol::new(alice_identity, alice_prekey.clone(), alice_signature, None);
+
+    let bob_identity = x25519_ristretto::PublicKey::from_bytes(
+        &BASE64_STANDARD
+            .decode(rcvr_keybundle.identity.public)
+            .unwrap(),
+    )
+    .unwrap();
+    let bob_prekey = x25519_ristretto::PublicKey::from_bytes(
+        &BASE64_STANDARD
+            .decode(rcvr_keybundle.prekey.public)
+            .unwrap(),
+    )
+    .unwrap();
+    let bob_signature = x25519_ristretto::Signature::from_bytes(
+        &BASE64_STANDARD
+            .decode(rcvr_keybundle.signature.public)
+            .unwrap(),
+    )
+    .unwrap();
+
+    let bob_one_time_key = x25519_ristretto::PublicKey::from_bytes(
+        &BASE64_STANDARD
+            .decode(rcvr_keybundle.onetime_keys.get(0).unwrap().clone().public)
+            .unwrap(),
+    )
+    .unwrap();
+
+    let (alice_identity, alice_ephemeral_key, bob_onetime_key, alice_sk, nonce, ciphertext) =
+        alice_protocol
+            .prepare_init_msg(&bob_identity, &bob_prekey, bob_signature, &bob_one_time_key)
+            .unwrap();
+    info!("identity: {:?}\nephemeral_key: {:?}\nbob_one_time_key: {:?}\nalice_sk: {:?}\nnonce: {:?}\nciphertext: {:?}\n", alice_identity,
+                                            alice_ephemeral_key, bob_onetime_key, alice_sk, nonce, ciphertext);
+
+    info!("alice_sk: {:?}", alice_sk);
+
+    use cryptraits::key::KeyPair;
+
+    let generated_kb: KeyBundle = KeyBundle {
+        identity: KeyPairB64 {
+            public: BASE64_STANDARD.encode(alice_identity.to_vec()),
+            private: None,
+        },
+        prekey: KeyPairB64 {
+            public: BASE64_STANDARD.encode(alice_prekey.public().to_vec()),
+            private: None,
+        },
+        signature: KeyPairB64 {
+            public: BASE64_STANDARD.encode(alice_signature.to_vec()),
+            private: None,
+        },
+        onetime_keys: vec![KeyPairB64 {
+            public: BASE64_STANDARD.encode(bob_onetime_key.to_vec()),
+            private: None,
+        }],
+        ephemeral_key: Some(KeyPairB64 {
+            public: BASE64_STANDARD.encode(alice_ephemeral_key.to_vec()),
+            private: None,
+        }),
+    };
+
+    let x = MsgPayload {
+        content: Some(MsgContent {
+            ciphertext: BASE64_STANDARD.encode(ciphertext),
+            nonce: BASE64_STANDARD.encode(nonce),
+            cleartext: None,
+        }),
+        timestamp: 0,
+        auth: Some(OpAuthPayload {
+            action: "x3dh".to_string(),
+            user: "".to_string(),
+            password: "".to_string(),
+            keybundle: Some(generated_kb),
+            message: "".to_string(),
+        }),
+        token: token,
+        author: msg.recipient,
+        recipient: msg.auth.unwrap().user,
+    };
+    info!("crafted message: {:?}", x);
+    msg_queue.lock().await.push(x.clone());
+    x
 }
 
 pub fn get_key_pair(

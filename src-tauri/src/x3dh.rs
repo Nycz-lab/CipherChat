@@ -29,7 +29,7 @@ pub fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> KeyBundl
 
     let mut ot_kp: Vec<KeyPairB64> = Vec::new();
 
-    for _i in 0..10 {
+    for _i in 0..100 {
         let onetime_keypair = x25519_ristretto::KeyPair::generate_with(OsRng);
 
         let kp = KeyPairB64 {
