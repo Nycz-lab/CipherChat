@@ -36,7 +36,7 @@ function Chat({token, setToken, user}) {
       },
       timestamp: Math.floor(Date.now()/1000),
       auth: null,
-      token: token,
+      message_id: '',
       author: 'You',
       recipient: recipient
     }

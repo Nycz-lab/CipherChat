@@ -32,7 +32,7 @@ use cryptraits::convert::ToVec;
 
 use crate::{
     util::{self, KeyBundle, KeyPairB64, MsgContent, MsgPayload, OpAuthPayload},
-    x3dh,
+    x3dh::{self, alice_x3dh, bob_x3dh},
     xxxdh::Protocol,
 };
 
@@ -42,8 +42,7 @@ pub struct Socket {
     ws_rcvr: Option<SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>>,
     pub stream_type: String,
     pub msg_queue: Arc<Mutex<Vec<MsgPayload>>>,
-    pub app_handle: tauri::AppHandle,
-    pub token: Arc<Mutex<String>>
+    pub app_handle: tauri::AppHandle
 }
 
 #[async_trait]
@@ -61,7 +60,7 @@ pub trait SocketFuncs {
     async fn register(&mut self, auth: MsgPayload, keybundle: KeyBundle)
         -> Result<(), util::Error>;
 
-    async fn fetch_bundle(&mut self, user: String, token: String) -> Result<(), util::Error>;
+    async fn fetch_bundle(&mut self, user: String) -> Result<(), util::Error>;
 }
 
 #[async_trait]
@@ -109,8 +108,7 @@ impl SocketFuncs for Socket {
             ws_rcvr: Some(ws_rcvr),
             stream_type: stream_type.to_string(),
             msg_queue: Arc::new(Mutex::new(Vec::new())),
-            app_handle,
-            token: Arc::new(Mutex::new(String::new()))
+            app_handle
         }))
     }
 
@@ -139,7 +137,7 @@ impl SocketFuncs for Socket {
         Ok(())
     }
 
-    async fn fetch_bundle(&mut self, user: String, token: String) -> Result<(), util::Error> {
+    async fn fetch_bundle(&mut self, user: String) -> Result<(), util::Error> {
         let msg = MsgPayload {
             content: None,
             timestamp: 0,
@@ -150,7 +148,7 @@ impl SocketFuncs for Socket {
                 keybundle: None,
                 message: "".to_string(),
             }),
-            token: token.clone(),
+            message_id: "".to_string(),
             author: "me".to_string(),
             recipient: "".to_string(),
         };
@@ -161,7 +159,6 @@ impl SocketFuncs for Socket {
         let payload = Message::text(json);
 
         self.ws_sender.lock().await.send(payload).await?;
-        *self.token.lock().await = token;
 
         Ok(())
     }
@@ -200,7 +197,6 @@ impl SocketFuncs for Socket {
 
         let msg_queue = self.msg_queue.clone();
         let app_handle = self.app_handle.clone();
-        let token = self.token.clone();
 
         tokio::spawn(async move {
             while let Some(Ok(msg)) = ws_rcvr.next().await {
@@ -214,16 +210,14 @@ impl SocketFuncs for Socket {
                                 match msg.clone().auth {
                                     Some(v) => {
                                         if v.action == "register" || v.action == "login" {
-                                            if msg.token != "" {
-                                                ctx.emit("register_token", msg).unwrap();
-                                            }
+                                            ctx.emit("register_token", msg).unwrap();
                                         } else if v.action == "fetch_bundle" {
-                                            let x = alice_x3dh(app_handle.clone(), msg, token.lock().await.clone()).await;
+                                            let x = alice_x3dh(app_handle.clone(), msg).await;
                                             let json = serde_json::to_string(&x).unwrap();
                                             let payload = Message::text(json);
                                             ws_sender.lock().await.send(payload).await.unwrap();
                                         } else if v.action == "x3dh" {
-                                            bob_x3dh(app_handle.clone(), msg_queue.clone(), msg.clone(), token.lock().await.clone()).await;
+                                            bob_x3dh(app_handle.clone(), msg_queue.clone(), msg.clone()).await;
                                         }
                                     }
                                     None => {
@@ -277,198 +271,3 @@ impl SocketFuncs for Socket {
     }
 }
 
-pub async fn bob_x3dh(app_handle: tauri::AppHandle, msg_queue: Arc<Mutex<Vec<MsgPayload>>>, msg: MsgPayload, token: String){
-
-    let kb = msg.auth.unwrap().keybundle.unwrap();
-
-    let store = app_handle.store_builder("credentials.bin").build();
-
-    let sndr_keybundle = store.get(msg.recipient.clone()).unwrap();
-    let sndr_keybundle = serde_json::from_value::<KeyBundle>(sndr_keybundle).unwrap();
-
-    let bob_identity = get_key_pair(sndr_keybundle.identity).unwrap();
-    let bob_prekey = get_key_pair(sndr_keybundle.prekey).unwrap();
-    let bob_signature = x25519_ristretto::Signature::from_bytes(
-        &BASE64_STANDARD
-            .decode(sndr_keybundle.signature.public)
-            .unwrap(),
-    )
-    .unwrap();
-
-    
-
-    let mut bob_onetime_key: Option<KeyPairB64> = Option::None;
-
-    for k in sndr_keybundle.onetime_keys{
-        if k.public == kb.onetime_keys.get(0).unwrap().public{
-            bob_onetime_key = Some(k);
-        }
-    }
-
-    let bob_onetime_key2 = get_key_pair(bob_onetime_key.clone().unwrap()).unwrap();
-
-    let bob_onetime_key = x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(bob_onetime_key.unwrap().public).unwrap())
-    .unwrap();
-
-    let mut bob_protocol =
-        Protocol::new(bob_identity, bob_prekey.clone(), bob_signature, Some(vec![bob_onetime_key2]));
-
-    let alice_identity =
-        x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(kb.identity.public).unwrap())
-            .unwrap();
-
-    let alice_ephemeral_key = x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(kb.ephemeral_key.unwrap().public).unwrap())
-    .unwrap();
-
-    let bob_sk = bob_protocol
-        .derive_shared_secret(
-            &alice_identity,
-            &alice_ephemeral_key,
-            &bob_onetime_key,
-            &BASE64_STANDARD.decode(msg.content.clone().unwrap().nonce).unwrap(),
-            &BASE64_STANDARD.decode(msg.content.unwrap().ciphertext).unwrap(),
-        )
-        .unwrap();
-
-    info!("bob_sk {:?}, author: {}", bob_sk, msg.author.clone());
-
-    // save bob_sk
-
-    let secret_store = app_handle.store_builder("secrets.bin").build();
-    secret_store.set(msg.author.clone(), BASE64_STANDARD.encode(bob_sk));
-    
-    secret_store.save().unwrap();
-
-
-}
-
-pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg: MsgPayload, token: String) -> MsgPayload {
-
-    let rcvr_keybundle = msg.auth.clone().unwrap().keybundle.unwrap();
-
-    let store = app_handle.store_builder("credentials.bin").build();
-
-    let sndr_keybundle = store.get(msg.recipient.clone()).unwrap();
-    let sndr_keybundle = serde_json::from_value::<KeyBundle>(sndr_keybundle).unwrap();
-
-    let alice_identity = get_key_pair(sndr_keybundle.identity).unwrap();
-    let alice_prekey = get_key_pair(sndr_keybundle.prekey).unwrap();
-    let alice_signature = x25519_ristretto::Signature::from_bytes(
-        &BASE64_STANDARD
-            .decode(sndr_keybundle.signature.public)
-            .unwrap(),
-    )
-    .unwrap();
-    let mut alice_protocol =
-        Protocol::new(alice_identity, alice_prekey.clone(), alice_signature, None);
-
-    let bob_identity = x25519_ristretto::PublicKey::from_bytes(
-        &BASE64_STANDARD
-            .decode(rcvr_keybundle.identity.public)
-            .unwrap(),
-    )
-    .unwrap();
-    let bob_prekey = x25519_ristretto::PublicKey::from_bytes(
-        &BASE64_STANDARD
-            .decode(rcvr_keybundle.prekey.public)
-            .unwrap(),
-    )
-    .unwrap();
-    let bob_signature = x25519_ristretto::Signature::from_bytes(
-        &BASE64_STANDARD
-            .decode(rcvr_keybundle.signature.public)
-            .unwrap(),
-    )
-    .unwrap();
-
-    let bob_one_time_key = x25519_ristretto::PublicKey::from_bytes(
-        &BASE64_STANDARD
-            .decode(rcvr_keybundle.onetime_keys.get(0).unwrap().clone().public)
-            .unwrap(),
-    )
-    .unwrap();
-
-    let (alice_identity, alice_ephemeral_key, bob_onetime_key, alice_sk, nonce, ciphertext) =
-        alice_protocol
-            .prepare_init_msg(&bob_identity, &bob_prekey, bob_signature, &bob_one_time_key)
-            .unwrap();
-
-    info!("alice_sk: {:?}", alice_sk);
-
-    // save alice_sk
-
-    let secret_store = app_handle.store_builder("secrets.bin").build();
-    secret_store.set(msg.auth.clone().unwrap().user, BASE64_STANDARD.encode(alice_sk));
-    
-    secret_store.save().unwrap();
-
-    use cryptraits::key::KeyPair;
-
-    let generated_kb: KeyBundle = KeyBundle {
-        identity: KeyPairB64 {
-            public: BASE64_STANDARD.encode(alice_identity.to_vec()),
-            private: None,
-        },
-        prekey: KeyPairB64 {
-            public: BASE64_STANDARD.encode(alice_prekey.public().to_vec()),
-            private: None,
-        },
-        signature: KeyPairB64 {
-            public: BASE64_STANDARD.encode(alice_signature.to_vec()),
-            private: None,
-        },
-        onetime_keys: vec![KeyPairB64 {
-            public: BASE64_STANDARD.encode(bob_onetime_key.to_vec()),
-            private: None,
-        }],
-        ephemeral_key: Some(KeyPairB64 {
-            public: BASE64_STANDARD.encode(alice_ephemeral_key.to_vec()),
-            private: None,
-        }),
-    };
-
-    let x = MsgPayload {
-        content: Some(MsgContent {
-            ciphertext: BASE64_STANDARD.encode(ciphertext),
-            nonce: BASE64_STANDARD.encode(nonce),
-            cleartext: None,
-        }),
-        timestamp: 0,
-        auth: Some(OpAuthPayload {
-            action: "x3dh".to_string(),
-            user: "".to_string(),
-            password: "".to_string(),
-            keybundle: Some(generated_kb),
-            message: "".to_string(),
-        }),
-        token: token,
-        author: msg.recipient,
-        recipient: msg.auth.unwrap().user,
-    };
-    x
-}
-
-pub fn get_key_pair(
-    key_pair: KeyPairB64,
-) -> Result<cryptimitives::key::KeyPair<x25519_ristretto::SecretKey>, Error> {
-    let alice_pub =
-        x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(key_pair.public).unwrap())
-            .unwrap();
-    let alice_priv = x25519_ristretto::SecretKey::from_bytes(
-        &BASE64_STANDARD
-            .decode(match key_pair.private {
-                Some(v) => v,
-                None => String::new(),
-            })
-            .unwrap(),
-    )
-    .unwrap();
-    let mut x = alice_pub.to_vec();
-    let mut y = alice_priv.to_vec();
-    y.append(&mut x);
-
-    let alice_key_bundle: cryptimitives::key::KeyPair<x25519_ristretto::SecretKey> =
-        x25519_ristretto::KeyPair::from_bytes(&y).unwrap();
-
-    Ok(alice_key_bundle)
-}

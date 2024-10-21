@@ -53,7 +53,7 @@ async fn send_msg(msg: MsgPayload, app_handle: tauri::AppHandle) -> Result<(), u
             socket.send_msg(msg, sk.as_str().unwrap()).await?;
         }else{
             socket.msg_queue.lock().await.push(msg.clone());
-            socket.fetch_bundle(msg.recipient, msg.token).await?;
+            socket.fetch_bundle(msg.recipient).await?;
         }
 
         

@@ -37,7 +37,7 @@ function Auth({token, setToken, user, setUser}) {
         password: password,
         message: ""
       },
-      token: '',
+      message_id: '',
       author: '',
       recipient: ''
     }
@@ -53,7 +53,7 @@ function Auth({token, setToken, user, setUser}) {
         password: password,
         message: ""
       },
-      token: '',
+      message_id: '',
       author: '',
       recipient: '',
     }
@@ -88,7 +88,7 @@ function Auth({token, setToken, user, setUser}) {
     const unlisten = listen("register_token", (e) => {
       console.log(e);
       toast({ title: 'Register Token!', body: e.payload.message_content });
-      setToken(e.payload.token);
+      setToken("the cake was a lie!");
     });
 
     return () => {
