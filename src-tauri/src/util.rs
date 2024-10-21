@@ -73,12 +73,13 @@ impl KeyPairB64 {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct OpAuthPayload{
-  pub action: String,
-  pub user: String,
-  pub password: String,
-  pub keybundle: Option<KeyBundle>,
-  pub message: String
-}
+    pub action: String,
+    pub user: String,
+    pub password: String,
+    pub keybundle: Option<KeyBundle>,
+    pub message: String,
+    pub success: Option<bool>,
+  }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MsgContent{

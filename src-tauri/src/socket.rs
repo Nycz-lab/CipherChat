@@ -115,24 +115,7 @@ impl SocketFuncs for Socket {
     async fn send_msg(&mut self, mut msg: MsgPayload, sk: &str) -> Result<(), util::Error> {
         info!("sending: {:?}", msg.content.clone());
 
-        let sk = BASE64_STANDARD.decode(sk).unwrap();
-
-        let mut nonce = vec![0; Aes256Gcm::NONCE_LEN];
-        OsRng.fill_bytes(&mut nonce);
-        
-        let cipher = Aes256Gcm::new(&sk);
-
-        let msg_content = msg.content.as_mut().unwrap();
-        let cleartext = msg_content.clone().cleartext.unwrap();
-
-        let ciphertext = cipher.encrypt(&nonce, cleartext.as_bytes(), None).unwrap();
-
-        msg_content.cleartext = None;
-        msg_content.ciphertext = BASE64_STANDARD.encode(ciphertext);
-        msg_content.nonce = BASE64_STANDARD.encode(nonce);
-
-        let json = serde_json::to_string(&msg)?;
-        let payload = Message::text(json);
+        let payload = encrypt_msg(msg, sk).await?;
         self.ws_sender.lock().await.send(payload).await?;
         Ok(())
     }
@@ -147,6 +130,7 @@ impl SocketFuncs for Socket {
                 password: "".to_string(),
                 keybundle: None,
                 message: "".to_string(),
+                success: None
             }),
             message_id: "".to_string(),
             author: "me".to_string(),
@@ -211,7 +195,15 @@ impl SocketFuncs for Socket {
                                 match msg.clone().auth {
                                     Some(v) => {
                                         if v.action == "register" || v.action == "login" {
-                                            ctx.emit("register_token", msg).unwrap();
+                                            match v.success{
+                                                Some(v) => {
+                                                    if v == true{
+                                                        ctx.emit("register_token", msg).unwrap();
+                                                    }
+                                                },
+                                                None => return,
+                                            };
+                                            
                                         } else if v.action == "fetch_bundle" {
                                             let x = alice_x3dh(app_handle.clone(), msg).await;
                                             let json = serde_json::to_string(&x).unwrap();
@@ -290,7 +282,6 @@ impl SocketFuncs for Socket {
 
 
 async fn encrypt_msg(mut msg: MsgPayload, sk: &str) -> Result<Message, util::Error> {
-    info!("sending: {:?}", msg.content.clone());
 
     let sk = BASE64_STANDARD.decode(sk).unwrap();
 

@@ -232,6 +232,7 @@ pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg: MsgPayload) -> MsgPay
             password: "".to_string(),
             keybundle: Some(generated_kb),
             message: "".to_string(),
+            success: Some(true)
         }),
         message_id: "".to_string(),
         author: msg.recipient,
