@@ -198,6 +198,7 @@ impl SocketFuncs for Socket {
         let msg_queue = self.msg_queue.clone();
         let app_handle = self.app_handle.clone();
 
+
         tokio::spawn(async move {
             while let Some(Ok(msg)) = ws_rcvr.next().await {
                 match msg {
@@ -216,6 +217,22 @@ impl SocketFuncs for Socket {
                                             let json = serde_json::to_string(&x).unwrap();
                                             let payload = Message::text(json);
                                             ws_sender.lock().await.send(payload).await.unwrap();
+                                            info!("sent x3dh payload");
+
+                                            let z = msg_queue.lock().await;
+
+                                            for msg in (*z).iter() {
+
+                                                let store = app_handle.store_builder("secrets.bin").build();
+                                                let sk = store.get(&msg.recipient).unwrap();
+
+                                                let payload = encrypt_msg(msg.clone(), sk.as_str().unwrap()).await.unwrap();
+                                                ws_sender.lock().await.send(payload).await.unwrap();
+                                                
+                                            }
+
+
+                                            
                                         } else if v.action == "x3dh" {
                                             bob_x3dh(app_handle.clone(), msg_queue.clone(), msg.clone()).await;
                                         }
@@ -271,3 +288,28 @@ impl SocketFuncs for Socket {
     }
 }
 
+
+async fn encrypt_msg(mut msg: MsgPayload, sk: &str) -> Result<Message, util::Error> {
+    info!("sending: {:?}", msg.content.clone());
+
+    let sk = BASE64_STANDARD.decode(sk).unwrap();
+
+    let mut nonce = vec![0; Aes256Gcm::NONCE_LEN];
+    OsRng.fill_bytes(&mut nonce);
+    
+    let cipher = Aes256Gcm::new(&sk);
+
+    let msg_content = msg.content.as_mut().unwrap();
+    let cleartext = msg_content.clone().cleartext.unwrap();
+
+    let ciphertext = cipher.encrypt(&nonce, cleartext.as_bytes(), None).unwrap();
+
+    msg_content.cleartext = None;
+    msg_content.ciphertext = BASE64_STANDARD.encode(ciphertext);
+    msg_content.nonce = BASE64_STANDARD.encode(nonce);
+
+    let json = serde_json::to_string(&msg)?;
+    let payload = Message::text(json);
+    
+    Ok(payload)
+}
