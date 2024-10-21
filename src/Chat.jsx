@@ -29,11 +29,14 @@ function Chat({token, setToken, user}) {
   async function sendMessage(){
 
     let msgStruct = {
-      content_type: 'message',
-      content: message,
+      content: {
+        ciphertext: '',
+        nonce: '',
+        cleartext: message
+      },
       timestamp: Math.floor(Date.now()/1000),
       auth: null,
-      token: token,
+      message_id: '',
       author: 'You',
       recipient: recipient
     }
@@ -57,8 +60,8 @@ function Chat({token, setToken, user}) {
 
     const unlisten = listen("msg", (e) => {
       console.log(e);
-      if(e.payload.content_type === "message"){
-        toast({ title: 'Message received!', body: e.payload.content });
+      if(e.payload.content !== null && e.payload.content !== undefined){
+        toast({ title: 'Message received!', body: e.payload.content.cleartext });
 
         setChat(chat => [...chat, e]);
 

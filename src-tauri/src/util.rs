@@ -26,23 +26,23 @@ pub enum Error {
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct MsgPayload {
-    pub content_type: String,
-    pub content: String,
+pub struct MsgPayload{
+    pub content: Option<MsgContent>,
     pub timestamp: u64,
     pub auth: Option<OpAuthPayload>,
-    pub token: String,
+    pub message_id: String,
     pub author: String,
-    pub recipient: String,
-}
+    pub recipient: String
+  }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct KeyBundle {
+pub struct KeyBundle{
     pub identity: KeyPairB64,
     pub prekey: KeyPairB64,
     pub signature: KeyPairB64,
     pub onetime_keys: Vec<KeyPairB64>,
-}
+    pub ephemeral_key: Option<KeyPairB64>
+  }
 
 impl KeyBundle {
     pub fn strip(&mut self) {
@@ -52,6 +52,10 @@ impl KeyBundle {
         for otk in &mut self.onetime_keys {
             otk.strip();
         }
+        match &mut self.ephemeral_key{
+            Some(v) => v.strip(),
+            None => (),
+        };
     }
 }
 
@@ -68,11 +72,20 @@ impl KeyPairB64 {
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct OpAuthPayload {
+pub struct OpAuthPayload{
     pub action: String,
     pub user: String,
     pub password: String,
     pub keybundle: Option<KeyBundle>,
+    pub message: String,
+    pub success: Option<bool>,
+  }
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct MsgContent{
+  pub ciphertext: String,
+  pub nonce: String,
+  pub cleartext: Option<String>
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]

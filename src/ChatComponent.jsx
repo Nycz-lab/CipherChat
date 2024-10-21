@@ -7,7 +7,7 @@ const ChatComponent = ({ chat }) => {
         <div key={index} className="message__chats">
           <p style={{marginRight: "100%"}}>{message.payload.author}</p>
           <div className="message__recipient">
-            <p>{message.payload.content}</p>
+            <p>{message.payload.content.cleartext}</p>
           </div>
         </div>
       ))}
