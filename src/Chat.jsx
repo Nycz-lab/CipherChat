@@ -17,6 +17,11 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import { BottomNavigation, BottomNavigationAction } from '@mui/material';
 import ListItemIcon from '@mui/material/ListItemIcon';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
 
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
@@ -34,6 +39,10 @@ import { emit, listen } from '@tauri-apps/api/event';
 import ChatComponent from "./ChatComponent";
 import { Person } from '@mui/icons-material';
 
+import { ToastContainer, toast, Bounce } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+
 
 function Chat({token, setToken, user, connection, setConnection}) {
   const [recipient, setRecipient] = useState("");
@@ -42,8 +51,17 @@ function Chat({token, setToken, user, connection, setConnection}) {
   const [chat, setChat] = useState({});
   const [contact, setContact] = useState("");
 
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [contactDialogUsername, setContactDialogUsername] = useState("");
+
 
   async function sendMessage(){
+
+    if(contact === ""){
+      toast.error("Recipient is empty...");
+      return;
+    }
+
     let msgStruct = {
       content: {
         ciphertext: '',
@@ -54,7 +72,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
       auth: null,
       message_id: '',
       author: user,
-      recipient: recipient
+      recipient: contact
     }
 
     invoke("send_msg", { msg: msgStruct });
@@ -81,7 +99,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
     
   }
 
-  async function toast(options) {
+  async function tauri_toast(options) {
     let permissionGranted = await isPermissionGranted();
     if (!permissionGranted) {
       const permission = await requestPermission();
@@ -96,7 +114,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
     const unlisten = listen("msg", (e) => {
       if(e.payload.content !== null && e.payload.content !== undefined){
-        toast({ title: 'Message received!', body: e.payload.content.cleartext });
+        tauri_toast({ title: 'Message received!', body: e.payload.content.cleartext });
         let msgStruct = e.payload;
         setChat(prevChat => {
           const newChat = { ...prevChat };
@@ -149,6 +167,44 @@ function Chat({token, setToken, user, connection, setConnection}) {
       <Box sx={{ display: 'flex' }}>
       <CssBaseline />
 
+      <Dialog
+        open={contactDialogOpen}
+      >
+        <DialogTitle>Choose Contact</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Input the Username of the person you want to chat with 😎
+          </DialogContentText>
+          <TextField
+            autoFocus
+            required
+            margin="dense"
+            id="name"
+            name="name"
+            label="Username"
+            fullWidth
+            variant="standard"
+            onChange={(e) => {setContactDialogUsername(e.currentTarget.value)}}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setChat(prevChat => {
+              const newChat = { ...prevChat };
+          
+              if (!(contactDialogUsername in newChat)) {
+                newChat[contactDialogUsername] = [];
+              }
+          
+              return newChat;
+            });
+            setContact(contactDialogUsername);
+            setContactDialogOpen(false);
+          }}>Ok</Button>
+          <Button onClick={() => setContactDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
       <Drawer
         sx={{
           width: 240,
@@ -163,7 +219,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
       >
         <List>
             <ListItem key="New">
-              <ListItemButton>
+              <ListItemButton onClick={() => setContactDialogOpen(true)}>
                 <ListItemIcon>
                   <AddIcon />
                 </ListItemIcon>
@@ -192,23 +248,21 @@ function Chat({token, setToken, user, connection, setConnection}) {
         component="main"
         sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
       >
-        <ChatComponent chat={chat} contact={contact}/>
+        <ChatComponent chat={chat} contact={contact} setMessage={setMessage}/>
 
-          
-
-        {/* <TextField
-            id="recipient"
-            onChange={(e) => {setRecipient(e.currentTarget.value);}}
-            placeholder="Enter a Username..."
-            label="Recipient"
-          /> */}
-
-
-{/* 
-          <Stack style={{ margin: 'auto', width: '30%', padding: '10px' }} spacing={2} direction="row">
-            <Button variant="outlined" onClick={() => sendMessage()}>Send</Button>
-            <Button variant="outlined" onClick={() => closeChat()}>Close</Button>
-          </Stack> */}
+              <ToastContainer
+              position="top-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="dark"
+              transition={Bounce}
+              />
 
             <BottomNavigation
               showLabels

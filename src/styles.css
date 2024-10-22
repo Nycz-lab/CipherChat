@@ -122,6 +122,9 @@ button {
   padding: 20px;
   overflow-y: scroll;
   background-image: linear-gradient(to bottom right, #121011, #1d0f28);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 
 }
 
