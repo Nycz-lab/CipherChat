@@ -19,7 +19,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import ChatComponent from "./ChatComponent";
 
 
-function Chat({token, setToken, user}) {
+function Chat({token, setToken, user, connection, setConnection}) {
   const [recipient, setRecipient] = useState("");
   const [message, setMessage] = useState("");
 
@@ -43,6 +43,11 @@ function Chat({token, setToken, user}) {
 
     invoke("send_msg", { msg: msgStruct });
     setChat(chat => [...chat, {payload: msgStruct}]);
+  }
+
+  async function closeChat(){
+    setToken("");
+    
   }
 
   async function toast(options) {
@@ -70,6 +75,19 @@ function Chat({token, setToken, user}) {
       
     });
 
+
+    return () => {
+      unlisten.then(f => f());
+    }
+
+
+  }, []);
+
+  useEffect(() => {
+    const unlisten = listen("connection_closed", (e) => {
+      setToken("");
+      setConnection({});
+    });
 
     return () => {
       unlisten.then(f => f());
@@ -118,6 +136,7 @@ function Chat({token, setToken, user}) {
 
           <Stack style={{ margin: 'auto', width: '30%', padding: '10px' }} spacing={2} direction="row">
             <Button variant="outlined" onClick={() => sendMessage()}>Send</Button>
+            <Button variant="outlined" onClick={() => closeChat()}>Close</Button>
           </Stack>
         </Container>
         
