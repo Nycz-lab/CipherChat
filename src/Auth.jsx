@@ -10,6 +10,9 @@ import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 
 import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import { Autocomplete } from '@mui/material';
+
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -22,13 +25,19 @@ import { emit, listen } from '@tauri-apps/api/event';
 
 import Connection from "./Connection";
 
+import { load } from '@tauri-apps/plugin-store';
+import SHA256 from 'crypto-js/sha256';
 
-function Auth({token, setToken, user, setUser}) {
+
+
+
+function Auth({token, setToken, user, setUser, connection, setConnection}) {
   // const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
 
 
   async function login() {
+    
     let msgStruct = {
       timestamp: Math.floor(Date.now()/1000),
       auth: {
@@ -99,7 +108,25 @@ function Auth({token, setToken, user, setUser}) {
   }, []);
 
 
-  const [connection, setConnection] = useState({});
+  
+
+  async function getLoginOptions(connection){
+    const hash = SHA256(connection.host).toString();
+    const credentials = await load(`${hash}/credentials.bin`, { autoSave: 0 });
+
+    let options = [];
+
+    let logins = await credentials.keys();
+
+    logins.forEach(login => {
+      options.push({name: login});
+    });
+
+    return options;
+
+  }
+
+
 
 
   const darkTheme = createTheme({
@@ -108,7 +135,11 @@ function Auth({token, setToken, user, setUser}) {
     },
   });
 
+  let [options, setOptions] = useState([]);
 
+  getLoginOptions(connection).then((x) => {
+    setOptions(x);
+  })
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -124,12 +155,24 @@ function Auth({token, setToken, user, setUser}) {
 
         <Container>
 
-          <TextField
-            id="login-username"
-            onChange={(e) => {setUser(e.currentTarget.value);}}
-            placeholder="Enter a Username..."
-            label="Username"
+            <Autocomplete
+            options={options}
+            getOptionLabel={(option) => option.name}
+            renderInput={(params) => (
+              <TextField
+              {...params}
+                id="login-username"
+                style={{width: '28%'}}
+                onChange={(e) => setUser(e.currentTarget.value)}
+                placeholder="Enter a Username..."
+                label="Username">
+            </TextField>
+            )}
+            freeSolo
+            onChange={(e, n) => setUser(n.name)}
           />
+
+          
           <TextField
             id="login-password"
             onChange={(e) => setPassword(e.currentTarget.value)}

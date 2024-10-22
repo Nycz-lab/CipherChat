@@ -19,6 +19,8 @@ function App() {
   const [token, setToken] = useState("");
   const [user, setUser] = useState("");
 
+  const [connection, setConnection] = useState({});
+
 
 
   async function toast(options) {
@@ -58,7 +60,8 @@ function App() {
 
 
   return (
-    token ? <Chat token={token} setToken={setToken} user={user}/>  : <Auth token={token} setToken={setToken} user={user} setUser={setUser}/>
+    token ? <Chat token={token} setToken={setToken} user={user} connection={connection} setConnection={setConnection}/>  :
+     <Auth token={token} setToken={setToken} user={user} setUser={setUser} connection={connection} setConnection={setConnection}/>
   );
 }
 
