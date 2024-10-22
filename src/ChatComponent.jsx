@@ -1,11 +1,13 @@
 import React from 'react';
 
-const ChatComponent = ({ chat }) => {
+import { TextField } from '@mui/material';
+
+const ChatComponent = ({ chat, contact }) => {
   return (
     <><div className="message__container">
-      {chat.map((message, index) => (
+      {contact !== "" && chat[contact] && chat[contact].map((message, index) => (
         <div key={index} className="message__chats">
-          <p style={{marginRight: "100%"}}>{message.author}</p>
+          <p style={{ marginRight: "100%" }}>{message.author}</p>
           <div className="message__recipient">
             <p>{message.content.cleartext}</p>
           </div>
@@ -28,6 +30,13 @@ const ChatComponent = ({ chat }) => {
         {/* <div className="message__status">
           <p>Someone is typing...</p>
         </div> */}
+
+        <TextField
+            id="login-password"
+            onChange={(e) => setMessage(e.currentTarget.value)}
+            placeholder="Enter your Message..."
+            type="Message"
+          />
     </div>
         
       </>
