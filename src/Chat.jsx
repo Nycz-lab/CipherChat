@@ -27,7 +27,6 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
 
   async function sendMessage(){
-
     let msgStruct = {
       content: {
         ciphertext: '',
@@ -37,12 +36,13 @@ function Chat({token, setToken, user, connection, setConnection}) {
       timestamp: Math.floor(Date.now()/1000),
       auth: null,
       message_id: '',
-      author: 'You',
+      author: user,
       recipient: recipient
     }
 
     invoke("send_msg", { msg: msgStruct });
-    setChat(chat => [...chat, {payload: msgStruct}]);
+    msgStruct.author = "You";
+    setChat(chat => [...chat, msgStruct]);
   }
 
   async function closeChat(){
@@ -64,13 +64,10 @@ function Chat({token, setToken, user, connection, setConnection}) {
   useEffect(() => {
 
     const unlisten = listen("msg", (e) => {
-      console.log(e);
       if(e.payload.content !== null && e.payload.content !== undefined){
         toast({ title: 'Message received!', body: e.payload.content.cleartext });
-
-        setChat(chat => [...chat, e]);
-
-        console.log(chat);
+        console.log(e.payload);
+        setChat(chat => [...chat, e.payload]);
       }
       
     });

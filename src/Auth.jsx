@@ -155,14 +155,17 @@ function Auth({token, setToken, user, setUser, connection, setConnection}) {
 
         <Container>
 
+          
+
             <Autocomplete
+            // style={{width: "fit-content"}}
             options={options}
             getOptionLabel={(option) => option.name}
+            style={{width: '100%'}}
             renderInput={(params) => (
               <TextField
               {...params}
                 id="login-username"
-                style={{width: '28%'}}
                 onChange={(e) => setUser(e.currentTarget.value)}
                 placeholder="Enter a Username..."
                 label="Username">
@@ -176,6 +179,7 @@ function Auth({token, setToken, user, setUser, connection, setConnection}) {
           <TextField
             id="login-password"
             onChange={(e) => setPassword(e.currentTarget.value)}
+            style={{width: '100%'}}
             placeholder="Enter your Password..."
             label="Password"
             type="password"
@@ -184,7 +188,7 @@ function Auth({token, setToken, user, setUser, connection, setConnection}) {
 
 
 
-          <Stack style={{ margin: 'auto', width: '30%', padding: '10px' }} spacing={2} direction="row">
+          <Stack style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', paddingTop: '10px'}} spacing={2} direction="row">
             <Button variant="outlined" onClick={() => login()}>Login</Button>
             <Button variant="outlined" onClick={() => register()}>Register</Button>
             <Button variant="outlined" onClick={() => closeConnection()}>Connect</Button>

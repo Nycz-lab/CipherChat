@@ -5,9 +5,9 @@ const ChatComponent = ({ chat }) => {
     <><div className="message__container">
       {chat.map((message, index) => (
         <div key={index} className="message__chats">
-          <p style={{marginRight: "100%"}}>{message.payload.author}</p>
+          <p style={{marginRight: "100%"}}>{message.author}</p>
           <div className="message__recipient">
-            <p>{message.payload.content.cleartext}</p>
+            <p>{message.content.cleartext}</p>
           </div>
         </div>
       ))}
