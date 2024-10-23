@@ -74,14 +74,14 @@ function Chat({token, setToken, user, connection, setConnection}) {
   const [messagesLoaded, setMessagesLoaded] = useState(false);
 
   const theme = useTheme();
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
   const handleDrawerOpen = () => {
-    setDrawerOpen(true);
+    setOpen(true);
   };
 
   const handleDrawerClose = () => {
-    setDrawerOpen(false);
+    setOpen(false);
   };
 
   
@@ -261,7 +261,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
       marginLeft: `-${drawerWidth}px`,
       variants: [
         {
-          props: ({ drawerOpen }) => drawerOpen,
+          props: ({ open }) => open,
           style: {
             transition: theme.transitions.create('margin', {
               easing: theme.transitions.easing.easeOut,
@@ -283,7 +283,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
     }),
     variants: [
       {
-        props: ({ drawerOpen }) => drawerOpen,
+        props: ({ open }) => open,
         style: {
           width: `calc(100% - ${drawerWidth}px)`,
           marginLeft: `${drawerWidth}px`,
@@ -312,7 +312,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
       <Box sx={{ display: 'flex' }}>
       <CssBaseline />
 
-      <AppBar position="fixed" open={drawerOpen}>
+      <AppBar position="fixed" open={open}>
         <Toolbar>
           <IconButton
             color="inherit"
@@ -323,13 +323,13 @@ function Chat({token, setToken, user, connection, setConnection}) {
               {
                 mr: 2,
               },
-              drawerOpen && { display: 'none' },
+              open && { display: 'none' },
             ]}
           >
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Persistent drawer
+            {contact}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -383,7 +383,8 @@ function Chat({token, setToken, user, connection, setConnection}) {
         }}
         variant="persistent"
         anchor="left"
-        open={drawerOpen}
+        open={open}
+        disableEnforceFocus
       >
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
@@ -412,8 +413,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
         </List>
       </Drawer>
 
-      <Main open={drawerOpen}>
-      <DrawerHeader />
+      <Main open={open}>
 
 
 
@@ -421,7 +421,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
         component="main"
         sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
       >
-        <ChatComponent chat={chat} contact={contact} setMessage={setMessage}/>
+        <ChatComponent chat={chat} contact={contact} message={message} setMessage={setMessage}/>
 
             <BottomNavigation
               showLabels

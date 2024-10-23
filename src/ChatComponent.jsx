@@ -2,7 +2,10 @@ import React from 'react';
 
 import { TextField } from '@mui/material';
 
-const ChatComponent = ({ chat, contact, setMessage }) => {
+const ChatComponent = ({ chat, contact, message, setMessage }) => {
+
+  console.log("rerender")
+
   return (
     <><div className="message__container">
 
@@ -44,7 +47,9 @@ const ChatComponent = ({ chat, contact, setMessage }) => {
         <TextField
             style={{marginTop: "auto"}}
             id="login-password"
+            autoFocus
             onChange={(e) => setMessage(e.currentTarget.value)}
+            value={message}
             placeholder="Enter your Message..."
             type="Message"
           />
