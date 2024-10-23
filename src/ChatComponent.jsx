@@ -2,12 +2,11 @@ import React from 'react';
 
 import { TextField } from '@mui/material';
 
-const ChatComponent = ({ chat, contact, message, setMessage }) => {
-
-  console.log("rerender")
+const ChatComponent = ({ chat, contact, message }) => {
 
   return (
-    <><div className="message__container">
+    <>
+    <div className="message__container">
 
 
       {contact !== "" && chat[contact] && chat[contact].map((message, index) => (
@@ -44,12 +43,11 @@ const ChatComponent = ({ chat, contact, message, setMessage }) => {
           <p>Someone is typing...</p>
         </div> */}
 
-        <TextField
+          <TextField
             style={{marginTop: "auto"}}
-            id="login-password"
-            autoFocus
-            onChange={(e) => setMessage(e.currentTarget.value)}
-            value={message}
+            id="asd"
+            // onChange={(e) => setMessage(e.currentTarget.value)}
+            inputRef={message}
             placeholder="Enter your Message..."
             type="Message"
           />
