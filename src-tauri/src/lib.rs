@@ -79,6 +79,18 @@ async fn login(auth: MsgPayload) -> Result<(), util::Error> {
 }
 
 #[tauri::command]
+async fn logout(auth: MsgPayload) -> Result<(), util::Error> {
+    let mut socket_lock = SOCKET.lock().await;
+    if let Some(socket) = socket_lock.as_mut() {
+        socket.logout(auth).await?;
+    } else {
+        // Handle the case when the Option is None
+        error!("Socket not initialized.");
+    }
+    Ok(())
+}
+
+#[tauri::command]
 async fn register(auth: MsgPayload, app_handle: tauri::AppHandle) -> Result<(), util::Error> {
     let mut socket_lock = SOCKET.lock().await;
     if let Some(socket) = socket_lock.as_mut() {
@@ -180,7 +192,8 @@ pub fn run() {
             connect_via_url,
             close_conn,
             login,
-            register
+            register,
+            logout
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

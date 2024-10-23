@@ -65,6 +65,7 @@ pub trait SocketFuncs {
     async fn login(&mut self, auth: MsgPayload) -> Result<(), util::Error>;
     async fn register(&mut self, auth: MsgPayload, keybundle: KeyBundle)
         -> Result<(), util::Error>;
+    async fn logout(&mut self, auth: MsgPayload) -> Result<(), util::Error>;
 
     async fn fetch_bundle(&mut self, user: String) -> Result<(), util::Error>;
 }
@@ -161,6 +162,15 @@ impl SocketFuncs for Socket {
         Ok(())
     }
 
+    async fn logout(&mut self, auth: MsgPayload) -> Result<(), util::Error> {
+        info!("logging out: {}", auth.auth.clone().unwrap().user.clone());
+        self.msg_queue.lock().await.clear();
+        let json = serde_json::to_string(&auth)?;
+        let payload = Message::text(json);
+        self.ws_sender.lock().await.send(payload).await?;
+        Ok(())
+    }
+
     async fn register(
         &mut self,
         mut auth: MsgPayload,
@@ -217,7 +227,7 @@ impl SocketFuncs for Socket {
                                             ws_sender.lock().await.send(payload).await.unwrap();
                                             info!("sent x3dh payload");
 
-                                            let z = msg_queue.lock().await;
+                                            let mut z = msg_queue.lock().await;
 
                                             for msg in (*z).iter() {
                                                 let path = get_store_path(&format!(
@@ -225,6 +235,11 @@ impl SocketFuncs for Socket {
                                                     msg.author
                                                 ))
                                                 .await;
+
+                                                info!("brr_using: {}", format!(
+                                                    "{}/secrets.bin",
+                                                    msg.author
+                                                ));
 
                                                 let store =
                                                     app_handle.store_builder(path).build().unwrap();
@@ -236,6 +251,8 @@ impl SocketFuncs for Socket {
                                                         .unwrap();
                                                 ws_sender.lock().await.send(payload).await.unwrap();
                                             }
+
+                                            z.clear();
                                         } else if v.action == "x3dh" {
                                             bob_x3dh(
                                                 app_handle.clone(),
@@ -251,6 +268,11 @@ impl SocketFuncs for Socket {
                                             msg.recipient
                                         ))
                                         .await;
+
+                                        info!("using {}", format!(
+                                        "{}/secrets.bin",
+                                        msg.recipient
+                                        ));
 
                                         let store = app_handle.store_builder(path).build().unwrap();
                                         let x = store.get(&msg.author).unwrap();

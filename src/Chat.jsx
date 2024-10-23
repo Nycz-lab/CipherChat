@@ -42,6 +42,8 @@ import { Person } from '@mui/icons-material';
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import { load } from '@tauri-apps/plugin-store';
+import SHA256 from 'crypto-js/sha256';
 
 
 function Chat({token, setToken, user, connection, setConnection}) {
@@ -53,6 +55,54 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [contactDialogUsername, setContactDialogUsername] = useState("");
+
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
+
+  
+
+  async function loadMessagesStore(){
+
+    const hash = SHA256(connection.host).toString();
+    const messageStore = await load(`${hash}/${user}/messages.bin`, { autoSave: 0 });
+
+    let messages = await messageStore.get("messages");
+    if(messages !== null && messages !== undefined){
+
+      setChat(messages);
+    }
+
+    setMessagesLoaded(true);
+
+  }
+
+  useEffect(() => {
+    console.log("load message store")
+    loadMessagesStore(); // This will always use latest value of count
+}, []);
+  
+
+
+  useEffect(() => {
+    storeMessages(chat); // This will always use latest value of count
+}, [chat]);
+  
+
+  async function storeMessages(messages){
+    if (!messagesLoaded){
+      return;
+    }
+    const hash = SHA256(connection.host).toString();
+    const messageStore = await load(`${hash}/${user}/messages.bin`, { autoSave: 0 });
+
+    if(Object.keys(messages).length === 0){
+      console.log("chat empty");
+    }
+    await messageStore.set("messages", messages);
+    await messageStore.save();
+
+    console.log("saved messages");
+    
+  }
 
 
   async function sendMessage(){
@@ -91,10 +141,23 @@ function Chat({token, setToken, user, connection, setConnection}) {
     });
 
     setContact(msgStruct.recipient);
-    // setChat(chat => [...chat, msgStruct]);
   }
 
   async function closeChat(){
+    let msgStruct = {
+      timestamp: Math.floor(Date.now()/1000),
+      auth: {
+        action: "logout",
+        user: '',
+        password: '',
+        message: ""
+      },
+      message_id: '',
+      author: user,
+      recipient: 'System'
+    }
+
+    invoke("logout", { auth: msgStruct });
     setToken("");
     
   }
@@ -112,7 +175,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
   useEffect(() => {
 
-    const unlisten = listen("msg", (e) => {
+    const unlisten = listen("msg", async (e) => {
       if(e.payload.content !== null && e.payload.content !== undefined){
         tauri_toast({ title: 'Message received!', body: e.payload.content.cleartext });
         let msgStruct = e.payload;

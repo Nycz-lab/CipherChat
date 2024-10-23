@@ -151,6 +151,8 @@ pub async fn bob_x3dh(
 
     // save bob_sk
 
+    info!("saving in {}", format!("{}/secrets.bin", msg.recipient));
+
     let secret_store = app_handle
         .store_builder(get_store_path(&format!("{}/secrets.bin", msg.recipient)).await)
         .build().unwrap();
@@ -214,6 +216,8 @@ pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg: MsgPayload) -> MsgPay
     info!("alice_sk: {:?}", alice_sk);
 
     // save alice_sk
+
+    info!("saving in {}", format!("{}/secrets.bin", msg.recipient));
 
     let secret_store = app_handle
         .store_builder(get_store_path(&format!("{}/secrets.bin", msg.recipient)).await)
