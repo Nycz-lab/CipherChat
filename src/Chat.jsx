@@ -45,6 +45,21 @@ import 'react-toastify/dist/ReactToastify.css';
 import { load } from '@tauri-apps/plugin-store';
 import SHA256 from 'crypto-js/sha256';
 
+import MuiAppBar from '@mui/material/AppBar';
+import { styled, useTheme } from '@mui/material/styles';
+import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+
+import Typography from '@mui/material/Typography';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+
+
+
+const drawerWidth = 240;
+
+
 
 function Chat({token, setToken, user, connection, setConnection}) {
   const [recipient, setRecipient] = useState("");
@@ -57,6 +72,17 @@ function Chat({token, setToken, user, connection, setConnection}) {
   const [contactDialogUsername, setContactDialogUsername] = useState("");
 
   const [messagesLoaded, setMessagesLoaded] = useState(false);
+
+  const theme = useTheme();
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+
+  const handleDrawerOpen = () => {
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+  };
 
   
 
@@ -224,12 +250,89 @@ function Chat({token, setToken, user, connection, setConnection}) {
     },
   });
 
+  const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
+    ({ theme }) => ({
+      flexGrow: 1,
+      padding: theme.spacing(3),
+      transition: theme.transitions.create('margin', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+      marginLeft: `-${drawerWidth}px`,
+      variants: [
+        {
+          props: ({ drawerOpen }) => drawerOpen,
+          style: {
+            transition: theme.transitions.create('margin', {
+              easing: theme.transitions.easing.easeOut,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+            marginLeft: 0,
+          },
+        },
+      ],
+    }),
+  );
+  
+  const AppBar = styled(MuiAppBar, {
+    shouldForwardProp: (prop) => prop !== 'open',
+  })(({ theme }) => ({
+    transition: theme.transitions.create(['margin', 'width'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    variants: [
+      {
+        props: ({ drawerOpen }) => drawerOpen,
+        style: {
+          width: `calc(100% - ${drawerWidth}px)`,
+          marginLeft: `${drawerWidth}px`,
+          transition: theme.transitions.create(['margin', 'width'], {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.enteringScreen,
+          }),
+        },
+      },
+    ],
+  }));
+  
+  const DrawerHeader = styled('div')(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(0, 1),
+    // necessary for content to be below app bar
+    ...theme.mixins.toolbar,
+    justifyContent: 'flex-end',
+  }));
+
 
 
   return (
     <ThemeProvider theme={darkTheme}>
       <Box sx={{ display: 'flex' }}>
       <CssBaseline />
+
+      <AppBar position="fixed" open={drawerOpen}>
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            onClick={handleDrawerOpen}
+            edge="start"
+            sx={[
+              {
+                mr: 2,
+              },
+              drawerOpen && { display: 'none' },
+            ]}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div">
+            Persistent drawer
+          </Typography>
+        </Toolbar>
+      </AppBar>
 
       <Dialog
         open={contactDialogOpen}
@@ -278,9 +381,15 @@ function Chat({token, setToken, user, connection, setConnection}) {
             boxSizing: 'border-box',
           },
         }}
-        variant="permanent"
+        variant="persistent"
         anchor="left"
+        open={drawerOpen}
       >
+        <DrawerHeader>
+          <IconButton onClick={handleDrawerClose}>
+            {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+          </IconButton>
+        </DrawerHeader>
         <List>
             <ListItem key="New">
               <ListItemButton onClick={() => setContactDialogOpen(true)}>
@@ -303,8 +412,8 @@ function Chat({token, setToken, user, connection, setConnection}) {
         </List>
       </Drawer>
 
-
-
+      <Main open={drawerOpen}>
+      <DrawerHeader />
 
 
 
@@ -321,6 +430,8 @@ function Chat({token, setToken, user, connection, setConnection}) {
               <BottomNavigationAction onClick={() => closeChat()} label="Close" icon={<CloseIcon />} />
             </BottomNavigation>
       </Box>
+
+      </Main>
 
       </Box>
         
