@@ -143,6 +143,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
     const unlisten = listen("connection_closed", (e) => {
       setToken("");
       setConnection({});
+      toast.error("Connection suddenly closed 😮!");
     });
 
     return () => {
@@ -249,20 +250,6 @@ function Chat({token, setToken, user, connection, setConnection}) {
         sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
       >
         <ChatComponent chat={chat} contact={contact} setMessage={setMessage}/>
-
-              <ToastContainer
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="dark"
-              transition={Bounce}
-              />
 
             <BottomNavigation
               showLabels

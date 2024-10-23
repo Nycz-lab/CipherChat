@@ -47,8 +47,9 @@ async fn send_msg(msg: MsgPayload, app_handle: tauri::AppHandle) -> Result<(), u
     let mut socket_lock = SOCKET.lock().await;
     if let Some(socket) = socket_lock.as_mut() {
         let store = app_handle
-            .store_builder(get_store_path("secrets.bin").await)
-            .build().unwrap();
+            .store_builder(get_store_path(&format!("{}/secrets.bin", msg.author)).await)
+            .build()
+            .unwrap();
         if store.has(&msg.recipient) {
             info!("found recipient in store");
             let sk = store.get(&msg.recipient).unwrap();
@@ -159,7 +160,6 @@ pub fn run() {
         .setup(|app| {
             let win = app.get_webview_window("main").unwrap();
 
-            // let mut store = StoreBuilder::new(app.handle(), "credentials.bin".parse()?).build();
             let rt = tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()

@@ -204,6 +204,8 @@ impl SocketFuncs for Socket {
                                                 Some(v) => {
                                                     if v == true {
                                                         ctx.emit("register_token", msg).unwrap();
+                                                    }else{
+                                                        ctx.emit("auth_failure", msg).unwrap();
                                                     }
                                                 }
                                                 None => return,
@@ -218,9 +220,14 @@ impl SocketFuncs for Socket {
                                             let z = msg_queue.lock().await;
 
                                             for msg in (*z).iter() {
-                                                let path = get_store_path("secrets.bin").await;
+                                                let path = get_store_path(&format!(
+                                                    "{}/secrets.bin",
+                                                    msg.author
+                                                ))
+                                                .await;
 
-                                                let store = app_handle.store_builder(path).build().unwrap();
+                                                let store =
+                                                    app_handle.store_builder(path).build().unwrap();
                                                 let sk = store.get(&msg.recipient).unwrap();
 
                                                 let payload =
@@ -239,13 +246,19 @@ impl SocketFuncs for Socket {
                                         }
                                     }
                                     None => {
-                                        let path = get_store_path("secrets.bin").await;
+                                        let path = get_store_path(&format!(
+                                            "{}/secrets.bin",
+                                            msg.recipient
+                                        ))
+                                        .await;
 
                                         let store = app_handle.store_builder(path).build().unwrap();
                                         let x = store.get(&msg.author).unwrap();
                                         let sk = x.as_str().unwrap();
 
                                         let sk = BASE64_STANDARD.decode(sk).unwrap();
+
+                                        info!("sk {:?}", sk);
 
                                         let msg_content = msg.content.as_mut().unwrap();
 

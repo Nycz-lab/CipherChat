@@ -14,6 +14,8 @@ import { emit, listen } from '@tauri-apps/api/event';
 import Auth from "./Auth";
 import Chat from "./Chat";
 
+import { ToastContainer, toast, Bounce } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [token, setToken] = useState("");
@@ -60,8 +62,27 @@ function App() {
 
 
   return (
-    token ? <Chat token={token} setToken={setToken} user={user} connection={connection} setConnection={setConnection}/>  :
-     <Auth token={token} setToken={setToken} user={user} setUser={setUser} connection={connection} setConnection={setConnection}/>
+    <>
+    {token !== "" &&
+      <Chat token={token} setToken={setToken} user={user} connection={connection} setConnection={setConnection}/>
+    }
+    {token === "" && 
+      <Auth token={token} setToken={setToken} user={user} setUser={setUser} connection={connection} setConnection={setConnection}/>
+    }
+    <ToastContainer
+              position="top-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="dark"
+              transition={Bounce}
+              />
+    </>
   );
 }
 

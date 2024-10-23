@@ -60,6 +60,7 @@ pub async fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> Ke
         onetime_keys: ot_kp,
         ephemeral_key: None,
     };
+    
 
     let store = app_handle
         .store_builder(get_store_path("credentials.bin").await)
@@ -151,7 +152,7 @@ pub async fn bob_x3dh(
     // save bob_sk
 
     let secret_store = app_handle
-        .store_builder(get_store_path("secrets.bin").await)
+        .store_builder(get_store_path(&format!("{}/secrets.bin", msg.recipient)).await)
         .build().unwrap();
     secret_store.set(msg.author.clone(), BASE64_STANDARD.encode(bob_sk));
 
@@ -215,7 +216,7 @@ pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg: MsgPayload) -> MsgPay
     // save alice_sk
 
     let secret_store = app_handle
-        .store_builder(get_store_path("secrets.bin").await)
+        .store_builder(get_store_path(&format!("{}/secrets.bin", msg.recipient)).await)
         .build().unwrap();
     secret_store.set(
         msg.auth.clone().unwrap().user,

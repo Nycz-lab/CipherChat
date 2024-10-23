@@ -13,6 +13,9 @@ import { isPermissionGranted, requestPermission, sendNotification } from '@tauri
 import {useEffect, useState} from "react";
 import { emit, listen } from '@tauri-apps/api/event';
 
+import { ToastContainer, toast, Bounce } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 export default function Connection({connection, setConnection}) {
   const [url, setUrl] = useState("");
 
@@ -23,17 +26,19 @@ export default function Connection({connection, setConnection}) {
         
         let status = await invoke("connect_via_url", { url: `wss://${url}:${port}` });
         setConnection(status);
-        console.log(status);
-        toast({ title: 'Connection successful', body: `Connection to wss://${url}:${port} has been successful!` });
-    }catch(err){
-        toast({ title: 'Connection Error', body: `No connection to wss://${url}:${port}!` });
-        console.error(err);
+        // console.log(status);
+        // toast({ title: 'Connection successful', body: `Connection to wss://${url}:${port} has been successful!` });
+        toast.info("Connection successful! 😄");
+      }catch(err){
+        // toast({ title: 'Connection Error', body: `No connection to wss://${url}:${port}!` });
+        toast.error("Connection error! 🥲 :" + err);
+        // console.error(err);
     }
 
     //"ws://127.0.0.1:9999"
   }
 
-  async function toast(options) {
+  async function tauri_toast(options) {
     let permissionGranted = await isPermissionGranted();
     if (!permissionGranted) {
       const permission = await requestPermission();
@@ -50,7 +55,7 @@ export default function Connection({connection, setConnection}) {
 
   useEffect(() => {
     const unlisten = listen("connection_closed", (e) => {
-      console.log(e);
+      toast.error("Connection suddenly closed 😮!");
       setConnection({});
     });
 
