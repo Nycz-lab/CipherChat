@@ -80,7 +80,6 @@ function Chat({token, setToken, user, connection, setConnection}) {
   }
 
   useEffect(() => {
-    console.log("load message store")
     loadMessagesStore(); // This will always use latest value of count
 }, []);
   
@@ -179,15 +178,19 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
   useEffect(() => {
 
-    const unlisten = listen("msg", async (e) => {
+    const unlisten = listen("msg", (e) => {
       if(e.payload.content !== null && e.payload.content !== undefined){
         tauri_toast({ title: 'Message received!', body: e.payload.content.cleartext });
+        console.log(e);
         let msgStruct = e.payload;
+        // TODO somehow this usestate gets called twice causing the receiver to get duplicate messages
         setChat(prevChat => {
           const newChat = { ...prevChat };
       
           if (msgStruct.author in newChat) {
-            newChat[msgStruct.author].push(msgStruct);
+            // TODO fix this temporary fix properly:
+            if(!newChat[msgStruct.author].includes(msgStruct))
+              newChat[msgStruct.author].push(msgStruct);
           } else {
             newChat[msgStruct.author] = [msgStruct];
           }
