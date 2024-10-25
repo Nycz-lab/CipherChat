@@ -115,6 +115,11 @@ function Chat({token, setToken, user, connection, setConnection}) {
       return;
     }
 
+    if(messageRef.current.value === ""){
+      toast.error("Message cant be empty...");
+      return;
+    }
+
     let msgStruct = {
       content: {
         ciphertext: '',
@@ -144,6 +149,8 @@ function Chat({token, setToken, user, connection, setConnection}) {
     });
 
     setContact(msgStruct.recipient);
+
+    messageRef.current.value = "";
   }
 
   async function closeChat(){
@@ -222,6 +229,24 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
 
   }, []);
+
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if(event.key !== "Enter"){
+        document.getElementById("chatTextbox").focus();
+        return;
+      }
+      sendMessage();
+    };
+
+    // Register the keypress event
+    window.addEventListener('keypress', handleKeyPress);
+
+    // Clean up by removing the event listener on unmount
+    return () => {
+      window.removeEventListener('keypress', handleKeyPress);
+    };
+  }, []); // Empty dependency array to run only once
 
 
 

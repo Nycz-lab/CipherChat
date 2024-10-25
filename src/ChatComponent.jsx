@@ -1,8 +1,13 @@
 import React from 'react';
 
 import { TextField } from '@mui/material';
+import { useEffect, useState, useRef } from "react";
 
 const ChatComponent = ({ chat, contact, message }) => {
+
+  useEffect(() => {
+    document.getElementById("chatTextbox").scrollIntoView(true);
+}, []);
 
   return (
     <>
@@ -44,8 +49,9 @@ const ChatComponent = ({ chat, contact, message }) => {
         </div> */}
 
           <TextField
+            autoComplete='off'
             style={{marginTop: "auto"}}
-            id="asd"
+            id="chatTextbox"
             // onChange={(e) => setMessage(e.currentTarget.value)}
             inputRef={message}
             placeholder="Enter your Message..."
