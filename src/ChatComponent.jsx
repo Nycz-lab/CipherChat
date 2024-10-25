@@ -5,6 +5,8 @@ import { useEffect, useState, useRef } from "react";
 
 import Message from './Message';
 
+import { writeFile, BaseDirectory } from '@tauri-apps/plugin-fs';
+
 const ChatComponent = ({ chat, contact, message }) => {
 
   const image_types = ["image/apng", "image/avif", "image/gif", "image/jpeg", "image/png", "image/svg+xml", "image/webp"];
@@ -47,7 +49,7 @@ const ChatComponent = ({ chat, contact, message }) => {
         }
         return(
 
-          <Message message={chat_message} index={index} payload={payload} image_types={image_types} video_types={video_types}/>
+          <Message key={chat_message.author === 'You' ? chat_message.message_id : chat_message.message_id + "-1"} message={chat_message} index={index} payload={payload} image_types={image_types} video_types={video_types}/>
         )
       })}
       

@@ -149,7 +149,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
       },
       timestamp: Math.floor(Date.now()/1000),
       auth: null,
-      message_id: '',
+      message_id: crypto.randomUUID(),
       author: user,
       recipient: contact
     }

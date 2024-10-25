@@ -37,8 +37,6 @@ const Message = ({ message, index, payload, image_types, video_types }) => {
         specific_css = " message__image";
     }
 
-    console.log(message);
-
   return (
     <>
         
