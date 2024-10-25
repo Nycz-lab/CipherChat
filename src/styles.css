@@ -133,29 +133,50 @@ button {
 }
 
 .message {
-  width: 80%;
+  /* width: 80%;
   height: 100%;
   border-radius: 10px;
   border: 1px solid #ddd;
   outline: none;
-  padding: 15px;
+  padding: 15px; */
+  
+  min-width: 300px;
+  max-width: 350px;
+  overflow-wrap: break-word;
+  padding: 15px 10px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.message > p {
+  margin: 0px;
+}
+
+.message__image {
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .message__recipient {
-  background-color: #1f1f1f;
+  /* background-color: #1f1f1f;
   width: 300px;
   padding: 10px;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: 15px; */
+  background-color: #1f1f1f;
 }
+
 .message__sender {
   background-image: linear-gradient(to bottom right, #8919f7, #a54ffc);
-  max-width: 300px;
-  padding: 10px;
-  border-radius: 10px;
-  margin-left: auto;
-  font-size: 15px;
 }
+
+.message__chats {
+  display: flex;
+  flex-direction: column;
+}
+
 .message__chats > p {
   font-size: 13px;
 }
@@ -165,4 +186,9 @@ button {
   bottom: 50px;
   font-size: 13px;
   font-style: italic;
+}
+
+.image {
+  max-width: 300px;
+  border-radius: 10px;
 }

@@ -3,33 +3,53 @@ import React from 'react';
 import { TextField } from '@mui/material';
 import { useEffect, useState, useRef } from "react";
 
+import Message from './Message';
+
 const ChatComponent = ({ chat, contact, message }) => {
+
+  const image_types = ["image/apng", "image/avif", "image/gif", "image/jpeg", "image/png", "image/svg+xml", "image/webp"];
+  const video_types = ["video/mp4"]
+
+  const supported_mime_types = image_types.concat(video_types)
 
   useEffect(() => {
     document.getElementById("chatTextbox").scrollIntoView(true);
 }, []);
+
+
 
   return (
     <>
     <div className="message__container">
 
 
-      {contact !== "" && chat[contact] && chat[contact].map((message, index) => (
-        <div key={index} className="message__chats">
-          {message.author !== "You" && 
-          <><p style={{ marginRight: "100%" }}>{message.author}</p><div className="message__recipient">
-              <p>{message.content.cleartext}</p>
-            </div></>
-          }
+      {contact !== "" && chat[contact] && chat[contact].map((chat_message, index) => {
+        let payload = JSON.parse(chat_message.content.cleartext);
+        if(payload.mime_type !== "text/plain"){
+          let u8_2 = new Uint8Array(atob(payload.data).split("").map(function(c) {
+              return c.charCodeAt(0); }));
+          let binary = Uint8Array.from(u8_2);
 
-          {message.author == "You" && 
-          <><p style={{ marginLeft: "95%" }}>{message.author}</p><div className="message__sender">
-              <p>{message.content.cleartext}</p>
-            </div></>
+          let url = "";
+
+          if(supported_mime_types.includes(payload.mime_type)){
+
+            let blob = new Blob([binary], {type: payload.mime_type});
+            url = URL.createObjectURL(blob);
+          }else{
+            let blob = new Blob([binary], {type: "application/octet-stream"});
+            url = URL.createObjectURL(blob);
+            
           }
           
-        </div>
-      ))}
+          
+          payload.data = url;
+        }
+        return(
+
+          <Message message={chat_message} index={index} payload={payload} image_types={image_types} video_types={video_types}/>
+        )
+      })}
       
           
         

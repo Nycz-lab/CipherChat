@@ -12,6 +12,7 @@ import { BottomNavigation, BottomNavigationAction } from '@mui/material';
 
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 
 
 
@@ -37,7 +38,10 @@ import { styled, useTheme } from '@mui/material/styles';
 import ContactDrawer from "./ContactDrawer";
 import ContactDialog from "./ContactDialog";
 
+import { open } from '@tauri-apps/plugin-dialog';
+import { readFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 
+import {getMimeTypeFromExtension} from "./util";
 
 
 const drawerWidth = 240;
@@ -58,7 +62,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
   const [messagesLoaded, setMessagesLoaded] = useState(false);
 
   const theme = useTheme();
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   
 
@@ -107,24 +111,41 @@ function Chat({token, setToken, user, connection, setConnection}) {
     
   }
 
-
-  async function sendMessage(){
-
-    if(contact === ""){
-      toast.error("Recipient is empty...");
-      return;
+  function Uint8ToString(u8a){
+    var CHUNK_SZ = 0x8000;
+    var c = [];
+    for (var i=0; i < u8a.length; i+=CHUNK_SZ) {
+      c.push(String.fromCharCode.apply(null, u8a.subarray(i, i+CHUNK_SZ)));
     }
+    return c.join("");
+  }
 
-    if(messageRef.current.value === ""){
-      toast.error("Message cant be empty...");
-      return;
-    }
+  async function attachFile(){
+    const file = await open({
+      multiple: false,
+      directory: false,
+    });
 
+    var re = /(?:\.([^.]+))?$/;
+    let filetype = re.exec(file)[1];
+
+    let binary_data = await readFile(file);
+    let b64 = btoa(Uint8ToString(binary_data));
+
+    let mime_type = getMimeTypeFromExtension(filetype);
+
+    let payload = {data: b64, mime_type: mime_type};
+    let json = JSON.stringify(payload);
+
+    await sendPayload(json);
+  }
+
+  async function sendPayload(data){
     let msgStruct = {
       content: {
         ciphertext: '',
         nonce: '',
-        cleartext: messageRef.current.value
+        cleartext: data
       },
       timestamp: Math.floor(Date.now()/1000),
       auth: null,
@@ -149,6 +170,24 @@ function Chat({token, setToken, user, connection, setConnection}) {
     });
 
     setContact(msgStruct.recipient);
+  }
+
+  async function sendMessage(){
+
+    if(contact === ""){
+      toast.error("Recipient is empty...");
+      return;
+    }
+
+    if(messageRef.current.value === ""){
+      toast.error("Message cant be empty...");
+      return;
+    }
+
+    let payload = {data: messageRef.current.value, mime_type: "text/plain"};
+    let json = JSON.stringify(payload);
+
+    await sendPayload(json);
 
     messageRef.current.value = "";
   }
@@ -187,9 +226,12 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
     const unlisten = listen("msg", (e) => {
       if(e.payload.content !== null && e.payload.content !== undefined){
+        let json_data = e.payload.content.cleartext;
+        // let data = JSON.parse(json_data);
         tauri_toast({ title: 'Message received!', body: e.payload.content.cleartext });
         console.log(e);
         let msgStruct = e.payload;
+        msgStruct.content.cleartext = json_data;
         // TODO somehow this usestate gets called twice causing the receiver to get duplicate messages
         setChat(prevChat => {
           const newChat = { ...prevChat };
@@ -232,6 +274,9 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
   useEffect(() => {
     const handleKeyPress = (event) => {
+      if(contactDialogOpen){
+        return;
+      }
       if(event.key !== "Enter"){
         document.getElementById("chatTextbox").focus();
         return;
@@ -246,7 +291,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
     return () => {
       window.removeEventListener('keypress', handleKeyPress);
     };
-  }, []); // Empty dependency array to run only once
+  }, [contact, contactDialogOpen]); // Empty dependency array to run only once
 
 
 
@@ -291,7 +336,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
       
 
-      <ContactDialog contactDialogOpen={contactDialogOpen} setContactDialogOpen={setContactDialogOpen} setChat={setChat} setContact={setContact} setContactDialogUsername={setContactDialogUsername} contactDialogUsername={contactDialogUsername}/>
+      <ContactDialog contactDialogOpen={contactDialogOpen} setContactDialogOpen={setContactDialogOpen} setChat={setChat} setContact={setContact}/>
 
 
       <ContactDrawer contact={contact} open={drawerOpen} setContact={setContact} setContactDialogOpen={setContactDialogOpen} setOpen={setDrawerOpen} chat={chat} />
@@ -311,6 +356,7 @@ function Chat({token, setToken, user, connection, setConnection}) {
             >
               <BottomNavigationAction onClick={() => sendMessage()} label="Send" icon={<SendIcon />}  />
               <BottomNavigationAction onClick={() => closeChat()} label="Close" icon={<CloseIcon />} />
+              <BottomNavigationAction onClick={() => attachFile()} label="Attach" icon={<AttachFileIcon />} />
             </BottomNavigation>
       </Box>
       </Main>

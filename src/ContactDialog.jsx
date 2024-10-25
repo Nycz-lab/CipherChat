@@ -10,7 +10,11 @@ import Button from '@mui/material/Button';
 
 import { TextField } from '@mui/material';
 
-const ContactDialog = ({ setContactDialogOpen, contactDialogOpen, contactDialogUsername, setContactDialogUsername, setContact, setChat }) => {
+import { useRef } from 'react';
+
+const ContactDialog = ({ setContactDialogOpen, contactDialogOpen, setContact, setChat }) => {
+
+  const contactDialogUsername = useRef();
 
   return (
    
@@ -30,21 +34,22 @@ const ContactDialog = ({ setContactDialogOpen, contactDialogOpen, contactDialogU
             label="Username"
             fullWidth
             variant="standard"
-            onChange={(e) => {setContactDialogUsername(e.currentTarget.value)}}
+            inputRef={contactDialogUsername}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {
+            let val = contactDialogUsername.current.value;
             setChat(prevChat => {
               const newChat = { ...prevChat };
           
-              if (!(contactDialogUsername in newChat)) {
-                newChat[contactDialogUsername] = [];
+              if (!(val in newChat)) {
+                newChat[val] = [];
               }
           
               return newChat;
             });
-            setContact(contactDialogUsername);
+            setContact(val);
             setContactDialogOpen(false);
           }}>Ok</Button>
           <Button onClick={() => {setContactDialogOpen(false)}}>Close</Button>

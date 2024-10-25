@@ -214,7 +214,7 @@ impl SocketFuncs for Socket {
                                                 Some(v) => {
                                                     if v == true {
                                                         ctx.emit("register_token", msg).unwrap();
-                                                    }else{
+                                                    } else {
                                                         ctx.emit("auth_failure", msg).unwrap();
                                                     }
                                                 }
@@ -236,10 +236,10 @@ impl SocketFuncs for Socket {
                                                 ))
                                                 .await;
 
-                                                info!("brr_using: {}", format!(
-                                                    "{}/secrets.bin",
-                                                    msg.author
-                                                ));
+                                                info!(
+                                                    "brr_using: {}",
+                                                    format!("{}/secrets.bin", msg.author)
+                                                );
 
                                                 let store =
                                                     app_handle.store_builder(path).build().unwrap();
@@ -269,10 +269,7 @@ impl SocketFuncs for Socket {
                                         ))
                                         .await;
 
-                                        info!("using {}", format!(
-                                        "{}/secrets.bin",
-                                        msg.recipient
-                                        ));
+                                        info!("using {}", format!("{}/secrets.bin", msg.recipient));
 
                                         let store = app_handle.store_builder(path).build().unwrap();
                                         let x = store.get(&msg.author).unwrap();

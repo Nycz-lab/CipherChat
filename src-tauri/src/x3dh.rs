@@ -60,11 +60,11 @@ pub async fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> Ke
         onetime_keys: ot_kp,
         ephemeral_key: None,
     };
-    
 
     let store = app_handle
         .store_builder(get_store_path("credentials.bin").await)
-        .build().unwrap();
+        .build()
+        .unwrap();
     store.set(auth.auth.unwrap().user, json!(public_kb));
 
     store.save().unwrap();
@@ -83,7 +83,8 @@ pub async fn bob_x3dh(
 
     let store = app_handle
         .store_builder(get_store_path("credentials.bin").await)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let sndr_keybundle = store.get(msg.recipient.clone()).unwrap();
     let sndr_keybundle = serde_json::from_value::<KeyBundle>(sndr_keybundle).unwrap();
@@ -155,7 +156,8 @@ pub async fn bob_x3dh(
 
     let secret_store = app_handle
         .store_builder(get_store_path(&format!("{}/secrets.bin", msg.recipient)).await)
-        .build().unwrap();
+        .build()
+        .unwrap();
     secret_store.set(msg.author.clone(), BASE64_STANDARD.encode(bob_sk));
 
     secret_store.save().unwrap();
@@ -166,7 +168,8 @@ pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg: MsgPayload) -> MsgPay
 
     let store = app_handle
         .store_builder(get_store_path("credentials.bin").await)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let sndr_keybundle = store.get(msg.recipient.clone()).unwrap();
     let sndr_keybundle = serde_json::from_value::<KeyBundle>(sndr_keybundle).unwrap();
@@ -221,7 +224,8 @@ pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg: MsgPayload) -> MsgPay
 
     let secret_store = app_handle
         .store_builder(get_store_path(&format!("{}/secrets.bin", msg.recipient)).await)
-        .build().unwrap();
+        .build()
+        .unwrap();
     secret_store.set(
         msg.auth.clone().unwrap().user,
         BASE64_STANDARD.encode(alice_sk),
