@@ -10,7 +10,7 @@ import { writeFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 const ChatComponent = ({ chat, contact, message }) => {
 
   const image_types = ["image/apng", "image/avif", "image/gif", "image/jpeg", "image/png", "image/svg+xml", "image/webp"];
-  const video_types = ["video/mp4"]
+  const video_types = ["video/mp4", "video/webm", "video/mpeg"]
 
   const supported_mime_types = image_types.concat(video_types)
 
@@ -26,30 +26,9 @@ const ChatComponent = ({ chat, contact, message }) => {
 
 
       {contact !== "" && chat[contact] && chat[contact].map((chat_message, index) => {
-        let payload = JSON.parse(chat_message.content.cleartext);
-        if(payload.mime_type !== "text/plain"){
-          let u8_2 = new Uint8Array(atob(payload.data).split("").map(function(c) {
-              return c.charCodeAt(0); }));
-          let binary = Uint8Array.from(u8_2);
-
-          let url = "";
-
-          if(supported_mime_types.includes(payload.mime_type)){
-
-            let blob = new Blob([binary], {type: payload.mime_type});
-            url = URL.createObjectURL(blob);
-          }else{
-            let blob = new Blob([binary], {type: "application/octet-stream"});
-            url = URL.createObjectURL(blob);
-            
-          }
-          
-          
-          payload.data = url;
-        }
         return(
 
-          <Message key={chat_message.author === 'You' ? chat_message.message_id : chat_message.message_id + "-1"} message={chat_message} index={index} payload={payload} image_types={image_types} video_types={video_types}/>
+          <Message key={chat_message.author === 'You' ? chat_message.message_id : chat_message.message_id + "-1"} message={chat_message} index={index} image_types={image_types} video_types={video_types}/>
         )
       })}
       

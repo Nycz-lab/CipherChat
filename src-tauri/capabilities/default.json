@@ -12,6 +12,7 @@
     "process:default",
     "store:default",
     "dialog:default",
-    "fs:default"
+    "fs:default",
+    "fs:allow-appdata-write-recursive"
   ]
 }

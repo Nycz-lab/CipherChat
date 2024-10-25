@@ -39,9 +39,11 @@ import ContactDrawer from "./ContactDrawer";
 import ContactDialog from "./ContactDialog";
 
 import { open } from '@tauri-apps/plugin-dialog';
-import { readFile, BaseDirectory } from '@tauri-apps/plugin-fs';
+import { writeFile, readFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 
 import {getMimeTypeFromExtension} from "./util";
+
+import { appDataDir } from '@tauri-apps/api/path';
 
 
 const drawerWidth = 240;
@@ -137,7 +139,30 @@ function Chat({token, setToken, user, connection, setConnection}) {
     let payload = {data: b64, mime_type: mime_type};
     let json = JSON.stringify(payload);
 
-    await sendPayload(json);
+    let msgStruct = await sendPayload(json);
+
+    let path = await appDataDir();
+    const hash = SHA256(connection.host).toString();
+
+
+    payload.data = `${path}/${hash}/${user}/${msgStruct.message_id}`;
+
+    await writeFile(`${path}/${hash}/${user}/${msgStruct.message_id}`, binary_data);
+
+    msgStruct.content.cleartext = payload;
+
+
+    setChat(prevChat => {
+      const newChat = { ...prevChat };
+  
+      if (msgStruct.recipient in newChat) {
+        newChat[msgStruct.recipient].push(msgStruct);
+      } else {
+        newChat[msgStruct.recipient] = [msgStruct];
+      }
+  
+      return newChat;
+    });
   }
 
   async function sendPayload(data){
@@ -157,19 +182,11 @@ function Chat({token, setToken, user, connection, setConnection}) {
     invoke("send_msg", { msg: msgStruct });
     msgStruct.author = "You";
 
-    setChat(prevChat => {
-      const newChat = { ...prevChat };
-  
-      if (msgStruct.recipient in newChat) {
-        newChat[msgStruct.recipient].push(msgStruct);
-      } else {
-        newChat[msgStruct.recipient] = [msgStruct];
-      }
-  
-      return newChat;
-    });
+    
 
     setContact(msgStruct.recipient);
+
+    return msgStruct;
   }
 
   async function sendMessage(){
@@ -187,7 +204,20 @@ function Chat({token, setToken, user, connection, setConnection}) {
     let payload = {data: messageRef.current.value, mime_type: "text/plain"};
     let json = JSON.stringify(payload);
 
-    await sendPayload(json);
+    let msgStruct = await sendPayload(json);
+    msgStruct.content.cleartext = payload;
+
+    setChat(prevChat => {
+      const newChat = { ...prevChat };
+  
+      if (msgStruct.recipient in newChat) {
+        newChat[msgStruct.recipient].push(msgStruct);
+      } else {
+        newChat[msgStruct.recipient] = [msgStruct];
+      }
+  
+      return newChat;
+    });
 
     messageRef.current.value = "";
   }
@@ -224,14 +254,40 @@ function Chat({token, setToken, user, connection, setConnection}) {
 
   useEffect(() => {
 
-    const unlisten = listen("msg", (e) => {
+    const unlisten = listen("msg", async (e) => {
       if(e.payload.content !== null && e.payload.content !== undefined){
         let json_data = e.payload.content.cleartext;
-        // let data = JSON.parse(json_data);
-        tauri_toast({ title: 'Message received!', body: e.payload.content.cleartext });
-        console.log(e);
+
+        // tauri_toast({ title: 'Message received!', body: e.payload.content.cleartext });
+        // console.log(e);
         let msgStruct = e.payload;
-        msgStruct.content.cleartext = json_data;
+        // msgStruct.content.cleartext = json_data;
+        
+        let payload = JSON.parse(json_data);
+
+        if(payload.mime_type !== "text/plain"){
+
+          toast.info("Message received 📷 ");
+        }else{
+          toast.info("Message received: 🖊️ " + payload.data);
+        }
+
+        if(payload.mime_type !== "text/plain"){
+          let path = await appDataDir();
+          const hash = SHA256(connection.host).toString();
+
+          let u8_2 = new Uint8Array(atob(payload.data).split("").map(function(c) {
+            return c.charCodeAt(0); }));
+          let binary = Uint8Array.from(u8_2);
+
+          payload.data = `${path}/${hash}/${user}/${msgStruct.message_id}`;
+
+          await writeFile(`${path}/${hash}/${user}/${msgStruct.message_id}`, binary);
+
+        }
+
+        msgStruct.content.cleartext = payload;
+
         // TODO somehow this usestate gets called twice causing the receiver to get duplicate messages
         setChat(prevChat => {
           const newChat = { ...prevChat };
