@@ -1,9 +1,14 @@
 use aes_gcm::Key;
 use async_trait::async_trait;
 use base64::{prelude::BASE64_STANDARD, Engine};
-use cryptimitives::{aead::aes_gcm::Aes256Gcm, key::{self, ed25519::SecretKey, x25519_ristretto, KeyPair}};
+use cryptimitives::{
+    aead::aes_gcm::Aes256Gcm,
+    key::{self, ed25519::SecretKey, x25519_ristretto, KeyPair},
+};
 use cryptraits::{
-    aead::Aead, convert::{FromBytes, Len}, key::Generate
+    aead::Aead,
+    convert::{FromBytes, Len},
+    key::Generate,
 };
 use log::info;
 use rand_core::{OsRng, RngCore};
@@ -31,9 +36,10 @@ use tokio_tungstenite::{
 use cryptraits::convert::ToVec;
 
 use crate::{
-    util::{self, KeyBundle, KeyPairB64, MsgContent, MsgPayload, OpAuthPayload},
+    util::{self, get_store_path, KeyBundle, KeyPairB64, MsgContent, MsgPayload, OpAuthPayload},
     x3dh::{self, alice_x3dh, bob_x3dh},
     xxxdh::Protocol,
+    HOMESERVER,
 };
 
 pub struct Socket {
@@ -42,7 +48,7 @@ pub struct Socket {
     ws_rcvr: Option<SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>>,
     pub stream_type: String,
     pub msg_queue: Arc<Mutex<Vec<MsgPayload>>>,
-    pub app_handle: tauri::AppHandle
+    pub app_handle: tauri::AppHandle,
 }
 
 #[async_trait]
@@ -59,6 +65,7 @@ pub trait SocketFuncs {
     async fn login(&mut self, auth: MsgPayload) -> Result<(), util::Error>;
     async fn register(&mut self, auth: MsgPayload, keybundle: KeyBundle)
         -> Result<(), util::Error>;
+    async fn logout(&mut self, auth: MsgPayload) -> Result<(), util::Error>;
 
     async fn fetch_bundle(&mut self, user: String) -> Result<(), util::Error>;
 }
@@ -108,7 +115,7 @@ impl SocketFuncs for Socket {
             ws_rcvr: Some(ws_rcvr),
             stream_type: stream_type.to_string(),
             msg_queue: Arc::new(Mutex::new(Vec::new())),
-            app_handle
+            app_handle,
         }))
     }
 
@@ -130,7 +137,7 @@ impl SocketFuncs for Socket {
                 password: "".to_string(),
                 keybundle: None,
                 message: "".to_string(),
-                success: None
+                success: None,
             }),
             message_id: "".to_string(),
             author: "me".to_string(),
@@ -149,6 +156,15 @@ impl SocketFuncs for Socket {
 
     async fn login(&mut self, auth: MsgPayload) -> Result<(), util::Error> {
         info!("logging in: {}", auth.auth.clone().unwrap().user.clone());
+        let json = serde_json::to_string(&auth)?;
+        let payload = Message::text(json);
+        self.ws_sender.lock().await.send(payload).await?;
+        Ok(())
+    }
+
+    async fn logout(&mut self, auth: MsgPayload) -> Result<(), util::Error> {
+        info!("logging out: {}", auth.auth.clone().unwrap().user.clone());
+        self.msg_queue.lock().await.clear();
         let json = serde_json::to_string(&auth)?;
         let payload = Message::text(json);
         self.ws_sender.lock().await.send(payload).await?;
@@ -182,7 +198,6 @@ impl SocketFuncs for Socket {
         let msg_queue = self.msg_queue.clone();
         let app_handle = self.app_handle.clone();
 
-
         tokio::spawn(async move {
             while let Some(Ok(msg)) = ws_rcvr.next().await {
                 match msg {
@@ -195,15 +210,16 @@ impl SocketFuncs for Socket {
                                 match msg.clone().auth {
                                     Some(v) => {
                                         if v.action == "register" || v.action == "login" {
-                                            match v.success{
+                                            match v.success {
                                                 Some(v) => {
-                                                    if v == true{
+                                                    if v == true {
                                                         ctx.emit("register_token", msg).unwrap();
+                                                    } else {
+                                                        ctx.emit("auth_failure", msg).unwrap();
                                                     }
-                                                },
+                                                }
                                                 None => return,
                                             };
-                                            
                                         } else if v.action == "fetch_bundle" {
                                             let x = alice_x3dh(app_handle.clone(), msg).await;
                                             let json = serde_json::to_string(&x).unwrap();
@@ -211,38 +227,69 @@ impl SocketFuncs for Socket {
                                             ws_sender.lock().await.send(payload).await.unwrap();
                                             info!("sent x3dh payload");
 
-                                            let z = msg_queue.lock().await;
+                                            let mut z = msg_queue.lock().await;
 
                                             for msg in (*z).iter() {
+                                                let path = get_store_path(&format!(
+                                                    "{}/secrets.bin",
+                                                    msg.author
+                                                ))
+                                                .await;
 
-                                                let store = app_handle.store_builder("secrets.bin").build();
+                                                info!(
+                                                    "brr_using: {}",
+                                                    format!("{}/secrets.bin", msg.author)
+                                                );
+
+                                                let store =
+                                                    app_handle.store_builder(path).build().unwrap();
                                                 let sk = store.get(&msg.recipient).unwrap();
 
-                                                let payload = encrypt_msg(msg.clone(), sk.as_str().unwrap()).await.unwrap();
+                                                let payload =
+                                                    encrypt_msg(msg.clone(), sk.as_str().unwrap())
+                                                        .await
+                                                        .unwrap();
                                                 ws_sender.lock().await.send(payload).await.unwrap();
-                                                
                                             }
 
-
-                                            
+                                            z.clear();
                                         } else if v.action == "x3dh" {
-                                            bob_x3dh(app_handle.clone(), msg_queue.clone(), msg.clone()).await;
+                                            bob_x3dh(
+                                                app_handle.clone(),
+                                                msg_queue.clone(),
+                                                msg.clone(),
+                                            )
+                                            .await;
                                         }
                                     }
                                     None => {
-                                        let store = app_handle.store_builder("secrets.bin").build();
+                                        let path = get_store_path(&format!(
+                                            "{}/secrets.bin",
+                                            msg.recipient
+                                        ))
+                                        .await;
+
+                                        info!("using {}", format!("{}/secrets.bin", msg.recipient));
+
+                                        let store = app_handle.store_builder(path).build().unwrap();
                                         let x = store.get(&msg.author).unwrap();
                                         let sk = x.as_str().unwrap();
 
                                         let sk = BASE64_STANDARD.decode(sk).unwrap();
 
+                                        info!("sk {:?}", sk);
+
                                         let msg_content = msg.content.as_mut().unwrap();
 
-                                        let nonce = BASE64_STANDARD.decode(&msg_content.nonce).unwrap();
-                                        let ciphertext = BASE64_STANDARD.decode(&msg_content.ciphertext).unwrap();
+                                        let nonce =
+                                            BASE64_STANDARD.decode(&msg_content.nonce).unwrap();
+                                        let ciphertext = BASE64_STANDARD
+                                            .decode(&msg_content.ciphertext)
+                                            .unwrap();
 
                                         let cipher = Aes256Gcm::new(&sk);
-                                        let cleartext = cipher.decrypt(&nonce, &ciphertext, None).unwrap();
+                                        let cleartext =
+                                            cipher.decrypt(&nonce, &ciphertext, None).unwrap();
 
                                         let cleartext = String::from_utf8(cleartext).unwrap();
 
@@ -280,14 +327,12 @@ impl SocketFuncs for Socket {
     }
 }
 
-
 async fn encrypt_msg(mut msg: MsgPayload, sk: &str) -> Result<Message, util::Error> {
-
     let sk = BASE64_STANDARD.decode(sk).unwrap();
 
     let mut nonce = vec![0; Aes256Gcm::NONCE_LEN];
     OsRng.fill_bytes(&mut nonce);
-    
+
     let cipher = Aes256Gcm::new(&sk);
 
     let msg_content = msg.content.as_mut().unwrap();
@@ -301,6 +346,6 @@ async fn encrypt_msg(mut msg: MsgPayload, sk: &str) -> Result<Message, util::Err
 
     let json = serde_json::to_string(&msg)?;
     let payload = Message::text(json);
-    
+
     Ok(payload)
 }

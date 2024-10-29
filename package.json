@@ -12,14 +12,20 @@
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
-    "@mui/material": "^5.13.6",
+    "@mui/icons-material": "^6.1.5",
+    "@mui/material": "^6.1.5",
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2.0.1",
+    "@tauri-apps/plugin-fs": "^2.0.1",
     "@tauri-apps/plugin-notification": "^2.0.0",
     "@tauri-apps/plugin-process": "^2.0.0",
     "@tauri-apps/plugin-shell": "^2",
+    "@tauri-apps/plugin-store": "^2.1.0",
+    "crypto-js": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-icons": "^4.10.1"
+    "react-icons": "^4.10.1",
+    "react-toastify": "^10.0.6"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

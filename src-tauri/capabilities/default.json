@@ -9,6 +9,10 @@
     "core:default",
     "shell:allow-open",
     "notification:default",
-    "process:default"
+    "process:default",
+    "store:default",
+    "dialog:default",
+    "fs:default",
+    "fs:allow-appdata-write-recursive"
   ]
 }

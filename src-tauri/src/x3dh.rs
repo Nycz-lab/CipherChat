@@ -19,12 +19,15 @@ use tauri_plugin_store::StoreExt;
 use cryptraits::key::Generate;
 use tokio::sync::Mutex;
 
+use crate::{
+    util::{get_store_path, KeyBundle, KeyPairB64, MsgContent, MsgPayload, OpAuthPayload},
+    xxxdh::Protocol,
+    Error, HOMESERVER,
+};
 
-use crate::{util::{KeyBundle, KeyPairB64, MsgContent, MsgPayload, OpAuthPayload}, xxxdh::Protocol, Error};
-
-pub fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> KeyBundle {
-
-    let identity: cryptimitives::key::KeyPair<x25519_ristretto::SecretKey> = x25519_ristretto::KeyPair::generate_with(OsRng);
+pub async fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> KeyBundle {
+    let identity: cryptimitives::key::KeyPair<x25519_ristretto::SecretKey> =
+        x25519_ristretto::KeyPair::generate_with(OsRng);
     let prekey = x25519_ristretto::KeyPair::generate_with(OsRng);
     let signature = identity.sign(&prekey.to_public().to_vec());
 
@@ -58,7 +61,10 @@ pub fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> KeyBundl
         ephemeral_key: None,
     };
 
-    let store = app_handle.store_builder("credentials.bin").build();
+    let store = app_handle
+        .store_builder(get_store_path("credentials.bin").await)
+        .build()
+        .unwrap();
     store.set(auth.auth.unwrap().user, json!(public_kb));
 
     store.save().unwrap();
@@ -68,12 +74,17 @@ pub fn get_keybundle(app_handle: tauri::AppHandle, auth: MsgPayload) -> KeyBundl
     public_kb
 }
 
-
-pub async fn bob_x3dh(app_handle: tauri::AppHandle, msg_queue: Arc<Mutex<Vec<MsgPayload>>>, msg: MsgPayload){
-
+pub async fn bob_x3dh(
+    app_handle: tauri::AppHandle,
+    msg_queue: Arc<Mutex<Vec<MsgPayload>>>,
+    msg: MsgPayload,
+) {
     let kb = msg.auth.unwrap().keybundle.unwrap();
 
-    let store = app_handle.store_builder("credentials.bin").build();
+    let store = app_handle
+        .store_builder(get_store_path("credentials.bin").await)
+        .build()
+        .unwrap();
 
     let sndr_keybundle = store.get(msg.recipient.clone()).unwrap();
     let sndr_keybundle = serde_json::from_value::<KeyBundle>(sndr_keybundle).unwrap();
@@ -87,29 +98,40 @@ pub async fn bob_x3dh(app_handle: tauri::AppHandle, msg_queue: Arc<Mutex<Vec<Msg
     )
     .unwrap();
 
-    
-
     let mut bob_onetime_key: Option<KeyPairB64> = Option::None;
 
-    for k in sndr_keybundle.onetime_keys{
-        if k.public == kb.onetime_keys.get(0).unwrap().public{
+    for k in sndr_keybundle.onetime_keys {
+        if k.public == kb.onetime_keys.get(0).unwrap().public {
             bob_onetime_key = Some(k);
         }
     }
 
     let bob_onetime_key2 = get_key_pair(bob_onetime_key.clone().unwrap()).unwrap();
 
-    let bob_onetime_key = x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(bob_onetime_key.unwrap().public).unwrap())
+    let bob_onetime_key = x25519_ristretto::PublicKey::from_bytes(
+        &BASE64_STANDARD
+            .decode(bob_onetime_key.unwrap().public)
+            .unwrap(),
+    )
     .unwrap();
 
-    let mut bob_protocol =
-        Protocol::new(bob_identity, bob_prekey.clone(), bob_signature, Some(vec![bob_onetime_key2]));
+    let mut bob_protocol = Protocol::new(
+        bob_identity,
+        bob_prekey.clone(),
+        bob_signature,
+        Some(vec![bob_onetime_key2]),
+    );
 
-    let alice_identity =
-        x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(kb.identity.public).unwrap())
-            .unwrap();
+    let alice_identity = x25519_ristretto::PublicKey::from_bytes(
+        &BASE64_STANDARD.decode(kb.identity.public).unwrap(),
+    )
+    .unwrap();
 
-    let alice_ephemeral_key = x25519_ristretto::PublicKey::from_bytes(&BASE64_STANDARD.decode(kb.ephemeral_key.unwrap().public).unwrap())
+    let alice_ephemeral_key = x25519_ristretto::PublicKey::from_bytes(
+        &BASE64_STANDARD
+            .decode(kb.ephemeral_key.unwrap().public)
+            .unwrap(),
+    )
     .unwrap();
 
     let bob_sk = bob_protocol
@@ -117,8 +139,12 @@ pub async fn bob_x3dh(app_handle: tauri::AppHandle, msg_queue: Arc<Mutex<Vec<Msg
             &alice_identity,
             &alice_ephemeral_key,
             &bob_onetime_key,
-            &BASE64_STANDARD.decode(msg.content.clone().unwrap().nonce).unwrap(),
-            &BASE64_STANDARD.decode(msg.content.unwrap().ciphertext).unwrap(),
+            &BASE64_STANDARD
+                .decode(msg.content.clone().unwrap().nonce)
+                .unwrap(),
+            &BASE64_STANDARD
+                .decode(msg.content.unwrap().ciphertext)
+                .unwrap(),
         )
         .unwrap();
 
@@ -126,19 +152,24 @@ pub async fn bob_x3dh(app_handle: tauri::AppHandle, msg_queue: Arc<Mutex<Vec<Msg
 
     // save bob_sk
 
-    let secret_store = app_handle.store_builder("secrets.bin").build();
+    info!("saving in {}", format!("{}/secrets.bin", msg.recipient));
+
+    let secret_store = app_handle
+        .store_builder(get_store_path(&format!("{}/secrets.bin", msg.recipient)).await)
+        .build()
+        .unwrap();
     secret_store.set(msg.author.clone(), BASE64_STANDARD.encode(bob_sk));
-    
+
     secret_store.save().unwrap();
-
-
 }
 
 pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg: MsgPayload) -> MsgPayload {
-
     let rcvr_keybundle = msg.auth.clone().unwrap().keybundle.unwrap();
 
-    let store = app_handle.store_builder("credentials.bin").build();
+    let store = app_handle
+        .store_builder(get_store_path("credentials.bin").await)
+        .build()
+        .unwrap();
 
     let sndr_keybundle = store.get(msg.recipient.clone()).unwrap();
     let sndr_keybundle = serde_json::from_value::<KeyBundle>(sndr_keybundle).unwrap();
@@ -189,9 +220,17 @@ pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg: MsgPayload) -> MsgPay
 
     // save alice_sk
 
-    let secret_store = app_handle.store_builder("secrets.bin").build();
-    secret_store.set(msg.auth.clone().unwrap().user, BASE64_STANDARD.encode(alice_sk));
-    
+    info!("saving in {}", format!("{}/secrets.bin", msg.recipient));
+
+    let secret_store = app_handle
+        .store_builder(get_store_path(&format!("{}/secrets.bin", msg.recipient)).await)
+        .build()
+        .unwrap();
+    secret_store.set(
+        msg.auth.clone().unwrap().user,
+        BASE64_STANDARD.encode(alice_sk),
+    );
+
     secret_store.save().unwrap();
 
     use cryptraits::key::KeyPair;
@@ -232,7 +271,7 @@ pub async fn alice_x3dh(app_handle: tauri::AppHandle, msg: MsgPayload) -> MsgPay
             password: "".to_string(),
             keybundle: Some(generated_kb),
             message: "".to_string(),
-            success: Some(true)
+            success: Some(true),
         }),
         message_id: "".to_string(),
         author: msg.recipient,
@@ -272,7 +311,8 @@ fn check_secret_sharing_x3dh() {
 
     let alice_identity = x25519_ristretto::KeyPair::generate_with(OsRng);
     let alice_prekey = x25519_ristretto::KeyPair::generate_with(OsRng);
-    let alice_signature: x25519_ristretto::Signature = alice_identity.sign(&alice_prekey.to_public().to_vec());
+    let alice_signature: x25519_ristretto::Signature =
+        alice_identity.sign(&alice_prekey.to_public().to_vec());
     let mut alice_protocol = Protocol::new(alice_identity, alice_prekey, alice_signature, None);
 
     // Instantiate Bob protocol.
@@ -297,7 +337,12 @@ fn check_secret_sharing_x3dh() {
 
     let (alice_identity, alice_ephemeral_key, bob_onetime_key, alice_sk, nonce, ciphertext) =
         alice_protocol
-            .prepare_init_msg(bob_identity.public(), bob_prekey.public(), bob_signature, onetime_key.public())
+            .prepare_init_msg(
+                bob_identity.public(),
+                bob_prekey.public(),
+                bob_signature,
+                onetime_key.public(),
+            )
             .unwrap();
 
     // Derive shared secret for Bob using Alice credentials.
